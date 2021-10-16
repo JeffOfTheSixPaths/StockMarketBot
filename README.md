@@ -1,5 +1,5 @@
 # StockMarketBot
-(Very early development) A bot that will eventualy try to predict stocks
+(Very early development) A bot that will eventually try to predict stocks
 
 
 to do:
