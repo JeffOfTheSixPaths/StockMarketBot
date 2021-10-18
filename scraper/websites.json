@@ -1,0 +1,18 @@
+{
+	"youtube":
+		{
+			"url" : "you of tube"
+		
+		},
+	"yahoo finance":
+		{
+			"url": "https://finance.yahoo.com/news/",
+			"headline": "class_=StretchedBox"
+		
+		},
+	"google finance":
+		{
+			"url": "blank"
+		}
+
+}
