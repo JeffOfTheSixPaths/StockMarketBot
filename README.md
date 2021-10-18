@@ -4,5 +4,5 @@
 
 to do:
   - add a gui
-  - import a good webscraper for having the ai do reasearch
+  -  have the webscraper be able to do more research
   - actually do natrual language processing and natrual language understanding
