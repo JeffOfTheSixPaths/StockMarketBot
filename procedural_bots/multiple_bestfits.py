@@ -43,12 +43,13 @@ def into_graph(ticker, plot_no_plot): #plot no plot means do you want to be show
 		t0dataY.append(float(data[1+i][1]))
 
 		    
-	x = np.array(t0dataX)
+		x = np.array(t0dataX)
 		
-	y = np.array(t0dataY)
-		
-	m,b = np.polyfit(x,y,1)
-	print(m)
+		y = np.array(t0dataY)
+
+		m,b = np.polyfit(x,y,1)
+		print(m)
+		m_data.append(m)
 	
 	
 	if not not plot_no_plot:
