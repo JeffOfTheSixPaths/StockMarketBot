@@ -2,6 +2,7 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import yfinance as yf
 ## lxml parser downloaded
 f = open('websites.json')
 data = json.load(f)
@@ -114,6 +115,16 @@ def print_research():
 
 
 
-
+def get_rec(ticker, amount):
+	diction = ticker.recommendations
+	recom = []
+	for i in range(amount):
+		# (firm, to grade, action)
+		recom.append([diction["Firm"][(-1*amount)+i],diction["To Grade"][(-1*amount)+i],diction["Action"][(-1*amount)+i]])
+		#oldest in the list is first
+	return recom
+		
+		
+		
 
 #448106
