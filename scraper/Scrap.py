@@ -133,6 +133,13 @@ def sustain(ticker):
 			# (the "value" like militaryContract and that value such as false e.i. dictionary["Value"]["militaryContract"] is false
 			sus.append([j, str(dictionary[str(i)][str(j)])])
 	return sus
-	
+def news(ticker):
+    news = ticker.news
+    other = []
+    for i in news:
+        if str(i["type"]) != "VIDEO":
+            #(title,publisher, time of publishment)
+            other.append([i["title"],i["publisher"],i["providerPublishTime"]])
+    return other
 
 #448106
