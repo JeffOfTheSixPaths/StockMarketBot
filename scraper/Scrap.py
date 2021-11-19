@@ -125,6 +125,14 @@ def get_rec(ticker, amount):
 	return recom
 		
 		
-		
+def sustain(ticker):
+	dictionary = ticker.sustainability.to_dict()
+	sus = []
+	for i in dictionary:
+		for j in dictionary[str(i)]:
+			# (the "value" like militaryContract and that value such as false e.i. dictionary["Value"]["militaryContract"] is false
+			sus.append([j, str(dictionary[str(i)][str(j)])])
+	return sus
+	
 
 #448106
