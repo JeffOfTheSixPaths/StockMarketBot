@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import json
 import yfinance as yf
 ## lxml parser downloaded
-f = open('websites.json')
-data = json.load(f)
 research =[["headline", "summary", "article"]]
 temp = 0
 
