@@ -10,7 +10,6 @@ temp = 0
 
 
 def get_page(url):
-	temp = BeautifulSoup(requests.get(str(url)).text,'lxml')
 	return BeautifulSoup(requests.get(str(url)).text,'lxml')
 	
 def get_headlines(site):
