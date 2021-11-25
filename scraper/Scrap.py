@@ -113,7 +113,7 @@ def print_research():
 
 
 
-def get_rec(ticker, amount):
+def get_rec(ticker, amount): #get recommendations
 	diction = ticker.recommendations
 	recom = []
 	for i in range(amount):
@@ -123,7 +123,7 @@ def get_rec(ticker, amount):
 	return recom
 		
 		
-def sustain(ticker):
+def sustain(ticker): #gets sustainability
 	dictionary = ticker.sustainability.to_dict()
 	sus = []
 	for i in dictionary:
@@ -140,4 +140,67 @@ def news(ticker):
             other.append([i["title"],i["publisher"],i["providerPublishTime"]])
     return other
 
+
+def get_nyt(date, nyt_key): #nyt archive api currently
+	#date should be something like /2021/11  /<year>/<month>
+	new_york_times = requests.get("https://api.nytimes.com/svc/archive/v1"+date+".json?api-key="+str(nyt_key))
+	new_york_times = new_york_times.json()["response"]["docs"]
+	return new_york_times
+	
+	
+	"""
+	new_york_times is now a array of dictionaries 
+	to print out everything and see what you need, copy and paste this into another program (of course import the function first)
+	
+	for i in get_nyt("/2021/11",<your api key>):
+	for j in i.items():
+		print(j)
+	print("\n\n\n ========================\n\n\n")
+	
+	^ prints out every dictionary (key, value) as a list
+	
+	"abstract"
+	"web_url"
+	"snippet" 
+	"lead_paragraph"
+
+	this can be None
+	"headline"
+	    "main"
+	    "kicker"
+	    "content_kicker"
+	    "print_headline"
+	    "name"
+	    "seo"
+	    "sub"
+	    
+	 the subsections of keywords are lists
+	"keywords"
+	    "name"
+	    "value"
+	    "rank"
+	    "major"
+	 
+	"pub_date"
+	"document_type"
+	"news_desk"
+	"section_name"
+	"byline"
+		"original"
+		"person"
+		        "firstname"
+		        "middlename"
+		        "qualifier"
+		        "title"
+		        "role"
+		        "organization"
+		        "rank"
+		"organization"
+
+	"type_of_material"
+	"word_count" 
+
+
+	^^ is everything I think would play any use
+	"""
 #448106
