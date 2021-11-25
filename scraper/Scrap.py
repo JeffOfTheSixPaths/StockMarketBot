@@ -140,6 +140,13 @@ def news(ticker):
     return other
 
 
+def nyt_paragraphs(url):
+        x = get_page(str(url)).find_all("p")
+        arr = []
+        for i in range(6,len(x)-1):
+                arr.append(x[i])
+        return arr
+
 def get_nyt(date, nyt_key): #nyt archive api currently
 	#date should be something like /2021/11  /<year>/<month>
 	new_york_times = requests.get("https://api.nytimes.com/svc/archive/v1"+date+".json?api-key="+str(nyt_key))
