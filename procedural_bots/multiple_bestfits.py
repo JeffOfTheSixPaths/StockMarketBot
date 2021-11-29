@@ -29,7 +29,7 @@ def into_graph(ticker, plot_no_plot): #plot no plot means do you want to be show
 	get_csv(ticker,"5d")
 	df = pd.read_csv(ticker) #was CSV_list
 	data = list(csv.reader(open(ticker,'r')))
-	global year0,month0,day0
+	global year0,month0,day0 #fixes a bug where the function can't find year0,month0, or day0
 	## syntax: print(data[n][k]) n>0 k>=0 n is the row and k is the portion or colum within that row
 	nop  = data[1][0]
 	year0 = int(nop.split('-')[0])
