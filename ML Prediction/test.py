@@ -54,3 +54,13 @@ plt.title("Train Dataset")
 plt.show()
 
 #future predictions
+
+def future_predict(i):
+	inputs = np.array([predata[(-lookback):]])
+	results = np.array([])
+	for i in range(i):
+		future_prediction = model.predict_generator(inputs)
+		results = np.append(results, future_prediction)
+		inputs = np.array([results[(-lookback):]])
+	return results
+		

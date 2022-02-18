@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
- 
+import os
+
 #load data from csv
 df=pd.read_csv("aaap.us.csv", usecols = ['Open'])
 df = df.to_numpy()
