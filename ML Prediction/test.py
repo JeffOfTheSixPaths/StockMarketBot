@@ -8,13 +8,14 @@ from keras.preprocessing.sequence import TimeseriesGenerator
 
 #parameters
 split_percent = 0.8 #Parameter for splitting portions into test and train
-lookback = 8 #The days to look back in supervised sequences
+lookback = 20 #The days to look back in supervised sequences
 
 #Read data from csv; Data and Close columns required
-df = pd.read_csv("aaap.us.csv", usecols = ['Close'])
+df = pd.read_csv("AAPL.csv", usecols = ['Close'])
 df = df.to_numpy()
-date = pd.read_csv("aaap.us.csv", usecols = ['Date'])
+date = pd.read_csv("AAPL.csv", usecols = ['Date'])
 date = date.to_numpy()
+#df = df[:(len(df)*0.5)]
 
 predata = df.reshape((-1,1))
 
@@ -33,6 +34,7 @@ supervised_test = TimeseriesGenerator(test_data, test_data, length=lookback, bat
 #Create Model
 model = Sequential()
 model.add(LSTM(256, activation='relu', input_shape=(lookback,1)))
+model.add(LSTM(256, activation='relu', input_shape=(lookback,1)))
 model.add(Dense(1))
 model.compile(optimizer='adam', loss='mse')
 
@@ -46,9 +48,10 @@ train_data = train_data.reshape((-1))
 test_data = test_data.reshape((-1))
 prediction = prediction.reshape((-1))
 
+predX = [x for x in range(len(predata)-len(supervised_test), len(predata))]
 plt.figure(figsize=(12,8))
-plt.plot(prediction, label="Actual")
-plt.plot(predata, label="Predicted")
+plt.plot(predX,prediction, label="Predicted")
+plt.plot(predata, label="Actual")
 plt.legend()
 plt.title("Train Dataset")
 plt.show()
@@ -57,10 +60,11 @@ plt.show()
 
 def future_predict(i):
 	inputs = np.array([predata[(-lookback):]])
-	results = np.array([])
+	data = np.array(predata)
 	for i in range(i):
 		future_prediction = model.predict_generator(inputs)
-		results = np.append(results, future_prediction)
-		inputs = np.array([results[(-lookback):]])
+		data = np.append(data, future_prediction)
+		inputs = np.array([data[(-lookback):]])
+	results = data[:(len(predata))]
 	return results
 		
