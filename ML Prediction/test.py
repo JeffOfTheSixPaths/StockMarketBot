@@ -11,9 +11,9 @@ split_percent = 0.8 #Parameter for splitting portions into test and train
 lookback = 20 #The days to look back in supervised sequences
 
 #Read data from csv; Data and Close columns required
-df = pd.read_csv("AAPL.csv", usecols = ['Close'])
+df = pd.read_csv("AAPL_before.csv", usecols = ['Close'])
 df = df.to_numpy()
-date = pd.read_csv("AAPL.csv", usecols = ['Date'])
+date = pd.read_csv("AAPL_before.csv", usecols = ['Date'])
 date = date.to_numpy()
 #df = df[:(len(df)*0.5)]
 
