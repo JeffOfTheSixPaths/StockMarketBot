@@ -5,8 +5,8 @@ currently does not do anything
 
 to do:
   - add a gui
-  -  have the webscraper be able to do more research
-  - actually do natural language processing and natural language understanding
+  - make the webscraper more usable
+  - have the webscraper get more data
 
 dependencies:
 ```
@@ -15,6 +15,7 @@ pip install lxml
 pip install yfinance
 pip install PyQt5
 pip install numpy
+pip install pandas
 pip install tensorflow
 pip install keras
 pip install matplotlib
