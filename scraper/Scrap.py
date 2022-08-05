@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import yfinance as yf
+import pandas as pd
 ## lxml parser downloaded
 research =[["headline", "summary", "article"]]
 temp = 0
@@ -151,7 +152,7 @@ def get_nyt(date, nyt_key): #nyt archive api currently
 	#date should be something like /2021/11  /<year>/<month>
 	new_york_times = requests.get("https://api.nytimes.com/svc/archive/v1"+date+".json?api-key="+str(nyt_key))
 	new_york_times = new_york_times.json()["response"]["docs"]
-	return new_york_times
+	return pd.json_normalize(new_york_times)
 	
 	
 	"""
