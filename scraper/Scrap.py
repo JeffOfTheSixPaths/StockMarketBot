@@ -61,11 +61,13 @@ def rmAngles(string_with_tags):
 			string_with_tags = string_with_tags[:less] + string_with_tags[greater+1:] 
 			#string=string[:index] + string[index+1:] removes the character at [index], but not at [index+1]
 	else:
-		print("Error:spare \"<\" or \">\" character in: \n" + string_with_tags) # if there was a spare, the parsing algorithm would break
+		print("Error: spare \"<\" or \">\" character in: \n" + string_with_tags) # if there was a spare, the parsing algorithm would break
 	return string_with_tags ##don't want to do string = string_with_tags somewhere just for return string 
 
 def not_exclude(href):
 	#finds href already
+	return href.find("/video/") == -1
+	#just for testing under here
 	if href.find("/video/") == -1:
 			#link = link.split("/")[2]
 			return True
@@ -106,7 +108,7 @@ def print_research():
 			print(research[i][index])
 			print("\n")
 		print(len(research) - i - 2)
-		input("press ENTER to continue... \n") #make shift pause
+		input("press ENTER to continue... \n") #just for pausing
 
 
 
@@ -210,4 +212,7 @@ def get_nyt(date, nyt_key): #nyt archive api currently
 
 	^^ is everything I think would play any use
 	"""
+if  __name__ == '__main__':
+	nyt_dict = get_nyt("/2021/9","plcRzjMm4wKxhYskXNKOuGufpGpZLK4h")
+	print(nyt_dict['pub_date'])
 #448106
