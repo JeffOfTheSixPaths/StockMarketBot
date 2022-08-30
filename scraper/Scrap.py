@@ -213,6 +213,5 @@ def get_nyt(date, nyt_key): #nyt archive api currently
 	^^ is everything I think would play any use
 	"""
 if  __name__ == '__main__':
-	nyt_dict = get_nyt("/2021/9","plcRzjMm4wKxhYskXNKOuGufpGpZLK4h")
 	print(nyt_dict['pub_date'])
 #448106
