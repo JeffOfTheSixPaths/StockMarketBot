@@ -29,7 +29,7 @@ months_to_articles = { #the articles that appear in each month in the form of a 
                         #'2021-8': [list of articles], etc.
                     }
 
-api_key = "plcRzjMm4wKxhYskXNKOuGufpGpZLK4h"
+api_key = ""
 for month in list_of_months[0:1]:
     months_to_articles[f'{month.year}-{month.month}'] = Scrap.get_nyt(f'/{month.year}/{month.month}', api_key)# need to replace all NaN with None
     # a little pseudocode -> months_to_articles[month] = get_nyt(month, api_key) 
