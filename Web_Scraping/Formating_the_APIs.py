@@ -1,4 +1,4 @@
-import Scrap
+import APIs
 import pandas as pd
 from datetime import date
 import json
@@ -29,7 +29,7 @@ months_to_articles = { #the articles that appear in each month in the form of a 
 
 api_key = "plcRzjMm4wKxhYskXNKOuGufpGpZLK4h"
 for month in list_of_months[0:1]: #
-    months_to_articles[f'{month.year}-{month.month}'] = Scrap.get_nyt(f'/{month.year}/{month.month}', api_key)# need to replace all NaN with None
+    months_to_articles[f'{month.year}-{month.month}'] = APIs.get_nyt(f'/{month.year}/{month.month}', api_key)# need to replace all NaN with None
     # ^ the dataframe is normalized
 
     # a little pseudocode -> months_to_articles[month] = get_nyt(month, api_key)
@@ -75,7 +75,7 @@ for month in months_to_articles:
         # articles
 
         #^ is a dictionary, so save it with json
-        
+
 #json save days_to_articles
 f = open("days_to_articles.json", 'w')
 json.dump(days_to_articles, f)
