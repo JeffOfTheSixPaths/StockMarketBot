@@ -12,7 +12,7 @@ def make_sentiment_model(train_dataset):
     encoder = tf.keras.layers.TextVectorization()
     encoder.adapt(train_dataset.map(lambda text, label: text))
 
-    model = tf.keras.Sequential([ 
+    model = tf.keras.Sequential([
         encoder,
         tf.keras.layers.Embedding(
             input_dim=len(encoder.get_vocabulary()),
