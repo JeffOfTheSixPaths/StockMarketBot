@@ -1,6 +1,6 @@
 # StockMarketBot
-(Very early development) A bot that will eventually try to predict stocks. 
-currently does not do anything 
+(Very early development) A bot that will eventually try to predict stocks.
+currently does not do anything
 
 
 to do:
@@ -17,6 +17,7 @@ pip install pandas
 pip install tensorflow
 pip install keras
 pip install matplotlib
+pip install gdown
 ```
 
 citations for some of the datasets used
