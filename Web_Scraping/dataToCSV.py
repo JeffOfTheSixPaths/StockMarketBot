@@ -22,10 +22,11 @@ def make_ticker(ticker: str): #this might be useless
 
 #the dates is represented as yy-mm-dd
 def get_stock_data(tickers: str, period = '2y', interval = '1d'):
-    return yf.download(tickers, period, interval)
+    return yf.download(tickers, period = period, interval = interval) 
+'''
 def get_stock_data(tickers: str, start: str, end: str): #start and end should be yy-mm-dd
     return yf.download(tickers, start, end)
-
+'''
 json_file_name = 'days_to_articles.json'
 print('going to run the formating')
 import Formating_the_APIs as fta
@@ -38,7 +39,13 @@ print('loaded the data')
 
 stock = 'msft'
 stock_data = get_stock_data(stock)
+print('doing stuff still')
 list_of_dates = fta.list_of_dates
 dates_of_the_stock = {} #list of all the dates that the stock was traded for as a dictionary
+stock_data['Date'] = stock_data.index #just adds the Date index as a coloumn
 
 #making a dictionary with all of the dates in that the stock has
+for index, date in enumerate(stock_data['Date']): #Index(['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
+    dates_of_the_stock[date] = [stock_data['Open'][index], stock_data['High'][index], stock_data['Low'][index], stock_data['Close'][index], stock_data['Adj Close'][index], stock_data['Volume'][index]]
+
+print(dates_of_the_stock[0])
