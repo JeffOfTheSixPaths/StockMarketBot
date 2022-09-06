@@ -132,5 +132,5 @@ def get_nyt(date, nyt_key): #nyt archive api currently
 	^^ is everything I think would play any use
 	"""
 if  __name__ == '__main__':
-	get_nyt('/2022/1', "plcRzjMm4wKxhYskXNKOuGufpGpZLK4h")
+	get_nyt('/2022/1', "")
 #448106
