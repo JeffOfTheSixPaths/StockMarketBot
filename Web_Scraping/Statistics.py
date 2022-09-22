@@ -42,7 +42,7 @@ def median(arr):
 def upper_quartile_median(arr):
     return statistics.median_high(arr)
 
-def lower_quartile_media(arr):
+def lower_quartile_median(arr):
     return statistics.median_low(arr)
 
 def range(arr):

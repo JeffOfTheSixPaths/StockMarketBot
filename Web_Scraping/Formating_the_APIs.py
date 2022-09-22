@@ -21,15 +21,21 @@ list_of_dates = pd.date_range(start = init_date, end = today, freq = 'D').tolist
 for i in range(len(list_of_dates)):
     list_of_dates[i] = str(list_of_dates[i].date())
 
-list_of_months = pd.date_range(start = init_date, end = today, freq = 'M').tolist()
+list_of_months = pd.date_range(start = init_date, end = today, freq = 'MS')
+
+print(list_of_months)
+list_of_months = list_of_months.tolist()
 #removing the 00:00:00 timestamp from the end of list_of_months
 months_to_articles = { #the articles that appear in each month in the form of a dictionary, example:
                         #'2021-8': [list of articles], etc.
                     }
 
 api_key = ""
+if api_key = "":
+    raise Exception("You forgot an api key")
 for month in list_of_months: #
-    print(month)
+    print(f'{month.year}-{month.month}')
+    print(f' the request is : /{month.year}/{month.month}' )
     months_to_articles[f'{month.year}-{month.month}'] = APIs.get_nyt(f'/{month.year}/{month.month}', api_key)# need to replace all NaN with None
     # ^ the dataframe is normalized
 
