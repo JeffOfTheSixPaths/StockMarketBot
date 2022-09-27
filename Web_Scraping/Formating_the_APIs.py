@@ -21,6 +21,7 @@ list_of_dates = pd.date_range(start = init_date, end = today, freq = 'D').tolist
 for i in range(len(list_of_dates)):
     list_of_dates[i] = str(list_of_dates[i].date())
 
+init_date = f'{init_date.year}-{init_date.month}-01'
 list_of_months = pd.date_range(start = init_date, end = today, freq = 'MS')
 
 print(list_of_months)
@@ -31,7 +32,7 @@ months_to_articles = { #the articles that appear in each month in the form of a 
                     }
 
 api_key = ""
-if api_key = "":
+if api_key == "":
     raise Exception("You forgot an api key")
 for month in list_of_months: #
     print(f'{month.year}-{month.month}')

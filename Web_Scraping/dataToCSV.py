@@ -52,8 +52,8 @@ for index, date in enumerate(stock_data['Date']): #The date and the correspondin
 list_of_stock_dates = list(dates_of_the_stock.keys())# each dates is in the format yy-mm-dd 00:00:00
 first_stock_date = list_of_stock_dates[0] #the first date in list_of_stock_dates which is the earliest date that exists
 print(f'the first date recognized is {first_stock_date}')
-first_stock_date = str(first_stock_date).split(' ')[0] #removes the 00:00:00 from the string
-#print(first_date)
+first_stock_date = str(first_stock_date).split(' ')[0] #removes the " 00:00:00" from the timestamp
+
 #[articles,stock prices]
 articles_and_stock_price = [articles[first_stock_date], dates_of_the_stock[first_stock_date]] #this is a 2d array
 starting_date_index = 0
@@ -88,9 +88,30 @@ weights_path = '../sentiment_model_weights/cp.cpkt'
 weights_dir = os.path.dirname(weights_path)
 latest = tf.train.latest_checkpoint(weights_dir)
 
-model = make_sentiment_model()
-model.load_weights(latest)
+train_text = 'sentiment_model_weights/sentiment_text.csv'
+train_sentiment = 'sentiment_model_weights/sentiment_sentiment.npy'
+s140_text = 'sentiment_model_weights/sentiment140_text.csv'
+s140_sentiment = 'sentiment_model_weights/sentiment140_sentiment.npy'
 
+train_text = pd.read_csv(train_text)
+train_sentiment = np.load(train_sentiment)
+train_text.pop('Unnamed: 0')
+s140_text = pd.read_csv(s140_text)
+s140_sentiment = np.load(s140_sentiment)
+s140_text.pop('Unnamed: 0')
+
+train_text = tf.convert_to_tensor(train_text)
+s140_tensor = tf.convert_to_tensor(s140_text)
+train_text = tf.concat([train_text,s140_tensor], 0)
+
+#print(train_text.shape)
+train_sentiment = tf.convert_to_tensor(train_sentiment)
+train_dataset = tf.data.Dataset.from_tensor_slices((train_text,train_sentiment))
+print('creating the model and encoding the data')
+model = sentimentAnalysis.make_sentiment_model(train_dataset)
+print('loading weights')
+model.load_weights(latest)
+print('loaded weights')
 def predict(sentence: str):
     return model.predict(np.array([sentence]))
 
@@ -99,17 +120,20 @@ test_sentences = [
                     'I hate this',
                     'Gamers are oppressed',
                     'I fucking love dogs', #using the f-word here as it can be used with different connotations in different sentences
-                    'I fucking hate dogs',
+                    'I fucking hate dogs', #it can also be used as a stronger form of "really"
+                    'I really love dogs',
+                    'I really hate dogs',
                     'I love dogs',
                     'I hate dogs',
                     'Rubiks cubes are a neat little thing',
                     'I really like eating meat'
                 ]
 
+print('Printing test sentences \n')
 for sentence in test_sentences: #just to test if the model loaded correctly, it should predict on the interval [0,1], but it frequently leaves that interval
     print(sentence)
     print(predict(sentence))
-
+    print('\n')
 
 def stats_of_a_list(arr):
     rms = Statistics.root_mean_square(arr)
@@ -201,7 +225,7 @@ for i in range(days_in_a_row):
 
 for i in range(days_in_a_row, days_in_a_row + average_of_n_days):
     future_values.append([stats_and_stock_prices[i][0][0],
-                 stats_and_stock_prices[i][0][1],
+                  stats_and_stock_prices[i][0][1],
                   stats_and_stock_prices[i][1][0],
                   stats_and_stock_prices[i][1][1],
                   stats_and_stock_prices[i][1][2],

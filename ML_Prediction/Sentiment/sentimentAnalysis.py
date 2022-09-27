@@ -28,4 +28,6 @@ def make_sentiment_model(train_dataset):
                   optimizer=tf.keras.optimizers.Adam(1e-4),
                   metrics=['accuracy'])
     return model
+
 #as of writing, this has 96.875% accuracy for extremely polar comments with our weights
+
