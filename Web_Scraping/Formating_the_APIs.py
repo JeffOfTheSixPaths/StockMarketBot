@@ -21,8 +21,10 @@ list_of_dates = pd.date_range(start = init_date, end = today, freq = 'D').tolist
 for i in range(len(list_of_dates)):
     list_of_dates[i] = str(list_of_dates[i].date())
 
+#due to how the pd.date_range works, the init_date needs to be changed to the beginning of the month since the date_range
+#pretty much says that the month only counts if it has a beginning within 2 years
 init_date = f'{init_date.year}-{init_date.month}-01'
-list_of_months = pd.date_range(start = init_date, end = today, freq = 'MS')
+list_of_months = pd.date_range(start = init_date, end = today, freq = 'MS', inclusive = 'both')
 
 print(list_of_months)
 list_of_months = list_of_months.tolist()
