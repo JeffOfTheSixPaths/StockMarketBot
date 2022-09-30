@@ -21,34 +21,38 @@ def make_ticker(ticker: str): #this might be useless
     return yf.Ticker(ticker)
 
 #the dates is represented as yy-mm-dd
-def get_stock_data(tickers: str, period = '2y', interval = '1d'):
+#the period might need to be changed depending on the length of time we go back
+def get_stock_data(tickers: str, period = '2y', interval = '1d'): #gets the stock prices for the previous period of time
     return yf.download(tickers, period = period, interval = interval)
-'''
-def get_stock_data(tickers: str, start: str, end: str): #start and end should be yy-mm-dd
-    return yf.download(tickers, start, end)
-'''
+
+#this json has each of the days and the articles made on each of those days
 json_file_name = 'days_to_articles.json'
-print('going to run the formating')
-import Formating_the_APIs as fta
-print("should've run the formating into json")
+print('Making days_to_articles.json')
+import Formating_the_APIs as fta #this file makes the days_to_articles.json which has the days with the articles published on those days as a dictionary
+print("Finished making days_to_articles.json")
 data = open(json_file_name, 'r')
 
-
+print("loading the data from the json")
 articles = json.load(data)
-print('loaded the data')
+print('loaded the data from the json successfully')
 
+print("getting stock prices for the past 2 years")
 stock = 'msft' #change the stock to track here
-stock_data = get_stock_data(stock)
+stock_data = get_stock_data(stock) #gets the stock prices for the past two years
+print("got the stock prices")
+
+#this part is making a dictionary of dates with their values being the stock prices for that day
 list_of_dates = fta.list_of_dates
 dates_of_the_stock = {} #list of all the dates that the stock was traded for as a dictionary
 stock_data['Date'] = stock_data.index #just adds the Date index as a coloumn
 
-#making a dictionary with all of the dates in that the stock has
+#making a dictionary with the date as the key and stock data on that day as the values
 for index, date in enumerate(stock_data['Date']): #The date and the corresponding stock's prices for that day
     dates_of_the_stock[str(date).split(' ')[0]] = [stock_data['Open'][index], stock_data['High'][index], stock_data['Low'][index], stock_data['Close'][index], stock_data['Adj Close'][index], stock_data['Volume'][index]]
 
 #print(list(dates_of_the_stock.keys())[0]) # earliest date
 
+#list_of_stock_dates is a list of the dates that the stock has a price on
 list_of_stock_dates = list(dates_of_the_stock.keys())# each dates is in the format yy-mm-dd 00:00:00
 first_stock_date = list_of_stock_dates[0] #the first date in list_of_stock_dates which is the earliest date that exists
 print(f'the first date recognized is {first_stock_date}')
@@ -56,6 +60,8 @@ first_stock_date = str(first_stock_date).split(' ')[0] #removes the " 00:00:00" 
 
 #[articles,stock prices]
 articles_and_stock_price = [articles[first_stock_date], dates_of_the_stock[first_stock_date]] #this is a 2d array
+
+#finds which date in the list of dates the stocks prices start on
 starting_date_index = 0
 for index, date in enumerate(list_of_dates):
     if date == first_stock_date:
@@ -80,6 +86,9 @@ for index, date in enumerate(list_of_dates[starting_date_index+1:]):
 
 
 #now for the ai
+print("Starting on making the AI")
+print("Downloading necessary files from a google drive")
+print("if the files are missing, open an issue")
 folder_id = '1MifzRW3qeJXdPfVdb7xz8Q6ITjtG6u9A'
 os.system('cd ../ML_Prediction/Sentiment/')
 os.system(f'gdown --folder {folder_id}') #downloads the folder called "sentiment_model_weights" from a google drive
@@ -93,20 +102,24 @@ train_sentiment = 'sentiment_model_weights/sentiment_sentiment.npy'
 s140_text = 'sentiment_model_weights/sentiment140_text.csv'
 s140_sentiment = 'sentiment_model_weights/sentiment140_sentiment.npy'
 
+# <something>_text holds the sentences and <something>_sentiment has the sentiment to <sometime>_text's sentences
+print("loading the data")
 train_text = pd.read_csv(train_text)
 train_sentiment = np.load(train_sentiment)
 train_text.pop('Unnamed: 0')
 s140_text = pd.read_csv(s140_text)
 s140_sentiment = np.load(s140_sentiment)
 s140_text.pop('Unnamed: 0')
+print("loaded the data")
 
+print("converting data to a usable form for the ai")
 train_text = tf.convert_to_tensor(train_text)
 s140_tensor = tf.convert_to_tensor(s140_text)
 train_text = tf.concat([train_text,s140_tensor], 0)
-
-#print(train_text.shape)
 train_sentiment = tf.convert_to_tensor(train_sentiment)
 train_dataset = tf.data.Dataset.from_tensor_slices((train_text,train_sentiment))
+print("converted")
+
 print('creating the model and encoding the data')
 model = sentimentAnalysis.make_sentiment_model(train_dataset)
 print('loading weights')
@@ -135,6 +148,9 @@ for sentence in test_sentences: #just to test if the model loaded correctly, it 
     print(predict(sentence))
     print('\n')
 
+
+#since each day has a variable number of articles, it is necessary to create some way to reduce it to some constant number
+#my approach is to generate many statistics about the set of articles on each day
 def stats_of_a_list(arr):
     rms = Statistics.root_mean_square(arr)
     mean = Statistics.arithmetic_mean(arr)
@@ -160,11 +176,23 @@ def stats_of_a_list(arr):
 stats_and_stock_prices = []
 #I only need 'snippet', 'lead_paragraph'
 for article_stock in articles_and_stock_price:
+    #article_stock is a 2d list of [articles, stock_prices]
     articles = article_stock[0]
     stock_prices = article_stock[1]
+
     predictions = []
     snippets = []
     lead_paragraphs = []
+    '''
+    for article in articles:
+        get the snippet and the lead paragraph
+        get the sentiment of the snippet and lead paragraph
+        then put the sentiment of the snippet and lead paragraph into predictions
+        and put the sentiment of the snippet into snippets
+        and put the sentiment of the lead paragraph into lead_paragraphs
+        
+        we put the sentiment into snippets and lead_paragraphs so that we can use stats_of_a_list() on both of them easily
+    '''
     for article in articles:
         snippet = article['snippet']
         lead_paragraph = article['lead_paragraph']
@@ -173,10 +201,14 @@ for article_stock in articles_and_stock_price:
         # put through the sentiment model
         #sentiment_and_stock_prices.append([[predict(snippet), predict(lead_paragraph)], stock_prices])
         predictions.append([snippet_sentiment, lead_paragraph_sentiment])
+        snippets.append(snippet_sentiment)
+        lead_paragraphs.append(lead_paragraph_sentiment)
 
 
+    #creates the statistics of the snippets and lead paragraphs
     snippets_stats = stats_of_a_list(snippets) #make sure to use the list for both of these
     lead_paragraph_stats = stats_of_a_list(lead_paragraphs)
+    #each day has its own stats and lead paragraph stats as well as stock prices
     stats_and_stock_prices.append([[snippets_stats, lead_paragraph_stats], stock_prices])
 
 
