@@ -4,7 +4,7 @@ currently does not do anything
 
 
 to do:
-  - make the webscraper more usable
+  - format the data from the sentiment analysis model into a time progression csv
   - have the webscraper get more data
 
 dependencies:
