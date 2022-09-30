@@ -15,6 +15,7 @@ pip install yfinance
 pip install numpy
 pip install pandas
 pip install tensorflow
+pip install tensorflow_datasets
 pip install keras
 pip install matplotlib
 pip install gdown
