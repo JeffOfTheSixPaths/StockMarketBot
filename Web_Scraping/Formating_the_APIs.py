@@ -33,7 +33,7 @@ months_to_articles = { #the articles that appear in each month in the form of a 
                         #'2021-8': [list of articles], etc.
                     }
 
-api_key = "plcRzjMm4wKxhYskXNKOuGufpGpZLK4h"
+api_key = ""
 if api_key == "":
     raise Exception("You forgot an api key")
 for month in list_of_months: #

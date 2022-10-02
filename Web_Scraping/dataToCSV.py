@@ -1,4 +1,6 @@
 from base64 import standard_b64decode
+from ipaddress import AddressValueError
+from zoneinfo import available_timezones
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
 import tensorflow.keras
@@ -59,7 +61,7 @@ print(f'the first date recognized is {first_stock_date}')
 first_stock_date = str(first_stock_date).split(' ')[0] #removes the " 00:00:00" from the timestamp
 
 #[articles,stock prices]
-articles_and_stock_price = [articles[first_stock_date], dates_of_the_stock[first_stock_date]] #this is a 2d array
+articles_and_stock_price = [[articles[first_stock_date], dates_of_the_stock[first_stock_date]]] #this is a 2d array
 
 #finds which date in the list of dates the stocks prices start on
 starting_date_index = 0
@@ -90,10 +92,9 @@ print("Starting on making the AI")
 print("Downloading necessary files from a google drive")
 print("if the files are missing, open an issue")
 folder_id = '1MifzRW3qeJXdPfVdb7xz8Q6ITjtG6u9A'
-os.system('cd ../ML_Prediction/Sentiment/')
 os.system(f'gdown --folder {folder_id}') #downloads the folder called "sentiment_model_weights" from a google drive
 
-weights_path = '../sentiment_model_weights/cp.cpkt'
+weights_path = 'sentiment_model_weights/cp.cpkt'
 weights_dir = os.path.dirname(weights_path)
 latest = tf.train.latest_checkpoint(weights_dir)
 
@@ -102,7 +103,7 @@ train_sentiment = 'sentiment_model_weights/sentiment_sentiment.npy'
 s140_text = 'sentiment_model_weights/sentiment140_text.csv'
 s140_sentiment = 'sentiment_model_weights/sentiment140_sentiment.npy'
 
-# <something>_text holds the sentences and <something>_sentiment has the sentiment to <sometime>_text's sentences
+# x_text holds the sentences and x_sentiment has the sentiment to <sometime>_text's sentences
 print("loading the data")
 train_text = pd.read_csv(train_text)
 train_sentiment = np.load(train_sentiment)
@@ -177,9 +178,18 @@ stats_and_stock_prices = []
 #I only need 'snippet', 'lead_paragraph'
 for article_stock in articles_and_stock_price:
     #article_stock is a 2d list of [articles, stock_prices]
+    print("\n\n")
+    print("==================================")
+    print(type(article_stock))
+    #print(article_stock)
+    print(article_stock[0])
+    print("\n\n")
+    print(article_stock[1])
+    print("\n\n")
+    print("==================================")
+    print("\n\n")   
     articles = article_stock[0]
     stock_prices = article_stock[1]
-
     predictions = []
     snippets = []
     lead_paragraphs = []
@@ -187,13 +197,13 @@ for article_stock in articles_and_stock_price:
     for article in articles:
         get the snippet and the lead paragraph
         get the sentiment of the snippet and lead paragraph
-        then put the sentiment of the snippet and lead paragraph into predictions
-        and put the sentiment of the snippet into snippets
-        and put the sentiment of the lead paragraph into lead_paragraphs
-        
+        then put the sentiment of both the snippet and lead paragraph into the array of predictions
+        and put the sentiment of the snippet into the array snippets
+        and put the sentiment of the lead paragraph into the array lead_paragraphs
         we put the sentiment into snippets and lead_paragraphs so that we can use stats_of_a_list() on both of them easily
     '''
     for article in articles:
+        
         snippet = article['snippet']
         lead_paragraph = article['lead_paragraph']
         snippet_sentiment = predict(snippet)
@@ -203,8 +213,6 @@ for article_stock in articles_and_stock_price:
         predictions.append([snippet_sentiment, lead_paragraph_sentiment])
         snippets.append(snippet_sentiment)
         lead_paragraphs.append(lead_paragraph_sentiment)
-
-
     #creates the statistics of the snippets and lead paragraphs
     snippets_stats = stats_of_a_list(snippets) #make sure to use the list for both of these
     lead_paragraph_stats = stats_of_a_list(lead_paragraphs)
@@ -215,35 +223,34 @@ for article_stock in articles_and_stock_price:
 #now have the articles with the stats of the sentiment
 
 days_in_a_row = 7 #we are using the data from a week to try and predict if the market will go up or down
-average_of_n_days = 4 #take the average price of the next n days (n = 4 here) which will be used to predict if the market will go up or down
-
-csv = f'{stock} {days_in_a_row} days in a row with the next {average_of_n_days} days.csv'
-
-if csv in os.listdir() or csv in os.listdir('../ML_Prediction/'):
-		raise Exception("The csv of data already exists")
-f = open(csv, 'a')
+num_of_future_days_to_take_average_of = 4 #take the average price of the next n days (n = 4 here) which will be used to predict if the market will go up or down
 
 # headers for the csv:
 # Snippet Dn, Lead Paragraph Dn, Open Dn, High Dn, Low Dn, Low Dn, Close Dn, Adj Close Dn, Volume Dn where n is the day #
-#after those there will be more headers of "average of the next {average_of_n_days}", comparison at the very end
+#after those there will be more headers of "average of the next {num_of_future_days_to_take_average_of}", comparison at the very end
 #8 commas
 
+headers = []
 for day in range(1, days_in_a_row + 1): #the +1 is since range isn't inclusive
-    f.write(f'Snippet D{day}\t')
-    f.write(f'Lead Paragraph D{day}\t')
-    f.write(f'Open D{day}\t')
-    f.write(f'High D{day}\t')
-    f.write(f'Low D{day}\t')
-    f.write(f'Close D{day}\t')
-    f.write(f'Volume D{day}\t')
+    headers.append(f'Snippet D{day}')
+    headers.append(f'Lead Paragraph D{day}')
+    headers.append(f'Open D{day}')
+    headers.append(f'High D{day}')
+    headers.append(f'Low D{day}')
+    headers.append(f'Close D{day}')
+    headers.append(f'Volume D{day}')
 
-f.write(f'average of the next {average_of_n_days}\t')
-f.write('comparison\n')
+headers.append(f'average of the next {num_of_future_days_to_take_average_of}')
+headers.append('comparison')
+print(headers)
 
 values = []
 future_values = []
 
+#initial values[]
 for i in range(days_in_a_row):
+    # [i][0] is part of the [snippet, lead paragraph]
+    # [i][1] is part of the stock prices
     values.append([stats_and_stock_prices[i][0][0],
                   stats_and_stock_prices[i][0][1],
                   stats_and_stock_prices[i][1][0],
@@ -255,7 +262,8 @@ for i in range(days_in_a_row):
                   stats_and_stock_prices[i][1][6],
                   ])
 
-for i in range(days_in_a_row, days_in_a_row + average_of_n_days):
+#initial future_values[]
+for i in range(days_in_a_row, days_in_a_row + num_of_future_days_to_take_average_of):
     future_values.append([stats_and_stock_prices[i][0][0],
                   stats_and_stock_prices[i][0][1],
                   stats_and_stock_prices[i][1][0],
@@ -267,8 +275,53 @@ for i in range(days_in_a_row, days_in_a_row + average_of_n_days):
                   stats_and_stock_prices[i][1][6],
                   ])
 
-print(values)
+compare_stock_type = 0
+#initial values of the average and comparison
+average_of_next_days = Statistics.arithmetic_mean(future_values) #just the average of future_values
+comparison = average_of_next_days > values[-1][1][compare_stock_type] #comparison compares if the average of the next few days is greater than the last price the values ended on
+#as of writing, it compares the average to values[-1][1][0], which is the Open price, changing compare_stock_type to another number (e.i compare_stock_type = 1) would make it a different price
+#the index are as follows from 0 - 6
+#Open, High, Low, Low, Close, Adj Close, Volume
 
+dataframe_of_intial_data = pd.DataFrame(values + future_values + [average_of_next_days, comparison]) # pretty much concats the data (ex [1,2] + [3,4] = [1,2,3,4])
+data_to_return = dataframe_of_intial_data.transpose() #makes the data horizontal instead of vertical
+data_to_return.columns = headers
+print(data_to_return)
+
+for i in range(days_in_a_row, len(stats_and_stock_prices) - num_of_future_days_to_take_average_of - 1 ):
+    values.pop(0) #get rid of the oldest day
+    values.append([stats_and_stock_prices[i][0][0],
+                  stats_and_stock_prices[i][0][1],
+                  stats_and_stock_prices[i][1][0],
+                  stats_and_stock_prices[i][1][1],
+                  stats_and_stock_prices[i][1][2],
+                  stats_and_stock_prices[i][1][3],
+                  stats_and_stock_prices[i][1][4],
+                  stats_and_stock_prices[i][1][5],
+                  stats_and_stock_prices[i][1][6],
+                  ]) #add the new day, which is future_values[0] before we pop it in the next line
+    
+    future = i + num_of_future_days_to_take_average_of
+    future_values.pop(0)
+    future_values.append([stats_and_stock_prices[future][0][0],
+                  stats_and_stock_prices[future][0][1],
+                  stats_and_stock_prices[future][1][0],
+                  stats_and_stock_prices[future][1][1],
+                  stats_and_stock_prices[future][1][2],
+                  stats_and_stock_prices[future][1][3],
+                  stats_and_stock_prices[future][1][4],
+                  stats_and_stock_prices[future][1][5],
+                  stats_and_stock_prices[future][1][6],
+                  ])
+
+    average_of_next_days = Statistics.arithmetic_mean(future_values) #just the average of future_values
+    comparison = average_of_next_days > values[-1][1][compare_stock_type] #comparison compares if the average of the next few days is greater than the last price the values ended on
+    list_of_new_data = values + future_values + [average_of_next_days, comparison]
+
+    data_to_return.loc[len(data_to_return)] = list_of_new_data #appends data to the end of the dataframe
+
+
+data_to_return.to_csv("IDIDIT.csv") #change this later to something more descriptive
 
 
 
