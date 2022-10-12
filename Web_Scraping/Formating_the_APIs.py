@@ -28,7 +28,8 @@ list_of_months = pd.date_range(start = init_date, end = today, freq = 'MS', incl
 
 print(list_of_months)
 list_of_months = list_of_months.tolist()
-#removing the 00:00:00 timestamp from the end of list_of_months
+
+#months_to_articles[some_month] == the articles in that month
 months_to_articles = { #the articles that appear in each month in the form of a dictionary, example:
                         #'2021-8': [list of articles], etc.
                     }
@@ -43,19 +44,20 @@ for month in list_of_months: #
     # ^ the dataframe is normalized
 
     # a little pseudocode -> months_to_articles[month] = get_nyt(month, api_key)
-    #each element is a dataframe in months_to_articles
+    #each element is a dataframe/dictionary in months_to_articles
 
 days_to_articles = {# same thing as months_to_articles but with days.
-                    #ex, 2021-12-31 : <some pd dataframe>
+                    #ex, 2021-12-31 : <array of dictionaries>
                     }
+
 NaN = None #supposed to stop the program from throwing error when it encounters NaN in the response from the apis
 
 '''
 for the for loop below:
 
 we assign the current month to a dataframe and then sort that dataframe by the publish date.
-we then go through each publish date and remove the T00:00:00 from them (for example 2022-08-01T00:00:00 to 2022-08-01).
 
+we then go through each publish date and remove the T00:00:00 from them (for example 2022-08-01T00:00:00 to 2022-08-01).
 we now go through each article individually and add their keys to a dictionary article_dictionary which will later be used to be appended into days_to_articles.
 continuing to go through each individual article, we add the publish date to the dictionary days_to_articles. if the publish date is not there it adds an empty
 list as its value. the article (article_dictionary) is then appended to that list.
@@ -70,11 +72,10 @@ for month in months_to_articles:
         # index is the id of the article it's working on
         sorted_dataframe['pub_date'][index] = str(element).split('T')[0] #get just the YY-MM-DD in the timestamp
 
+        #going through each article
         article_dictionary = {}
         for key in sorted_dataframe:
             article_dictionary[key] = str(sorted_dataframe[key][index])
-        #article_dictionary = pd.json_normalize(article_dictionary)
-        #article_dictionary.columns = sorted_dataframe.columns
 
         try:
             type(days_to_articles[str(article_dictionary['pub_date'])]) == type([]) #if the element of a key is a list

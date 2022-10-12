@@ -18,7 +18,6 @@ import Statistics #not to be confused with the statistics module that's preinsta
 #making the data from the other files into a form more usuable for AI.
 
 
-
 def make_ticker(ticker: str): #this might be useless
     return yf.Ticker(ticker)
 
@@ -103,7 +102,7 @@ train_sentiment = 'sentiment_model_weights/sentiment_sentiment.npy'
 s140_text = 'sentiment_model_weights/sentiment140_text.csv'
 s140_sentiment = 'sentiment_model_weights/sentiment140_sentiment.npy'
 
-# x_text holds the sentences and x_sentiment has the sentiment to <sometime>_text's sentences
+# x_text holds the sentences and x_sentiment has the sentiment to x_text's sentences
 print("loading the data")
 train_text = pd.read_csv(train_text)
 train_sentiment = np.load(train_sentiment)
@@ -127,7 +126,7 @@ print('loading weights')
 model.load_weights(latest)
 print('loaded weights')
 def predict(sentence: str):
-    return model.predict(np.array([sentence]))
+    return model.predict(np.array([sentence]), verbose = 0)
 
 test_sentences = [
                     'I love this',
@@ -178,21 +177,12 @@ stats_and_stock_prices = []
 #I only need 'snippet', 'lead_paragraph'
 for article_stock in articles_and_stock_price:
     #article_stock is a 2d list of [articles, stock_prices]
-    print("\n\n")
-    print("==================================")
-    print(type(article_stock))
-    #print(article_stock)
-    print(article_stock[0])
-    print("\n\n")
-    print(article_stock[1])
-    print("\n\n")
-    print("==================================")
-    print("\n\n")   
     articles = article_stock[0]
     stock_prices = article_stock[1]
     predictions = []
     snippets = []
     lead_paragraphs = []
+
     '''
     for article in articles:
         get the snippet and the lead paragraph
@@ -200,22 +190,29 @@ for article_stock in articles_and_stock_price:
         then put the sentiment of both the snippet and lead paragraph into the array of predictions
         and put the sentiment of the snippet into the array snippets
         and put the sentiment of the lead paragraph into the array lead_paragraphs
+
         we put the sentiment into snippets and lead_paragraphs so that we can use stats_of_a_list() on both of them easily
     '''
+
     for article in articles:
-        
         snippet = article['snippet']
         lead_paragraph = article['lead_paragraph']
-        snippet_sentiment = predict(snippet)
-        lead_paragraph_sentiment = predict(lead_paragraph)
-        # put through the sentiment model
-        #sentiment_and_stock_prices.append([[predict(snippet), predict(lead_paragraph)], stock_prices])
-        predictions.append([snippet_sentiment, lead_paragraph_sentiment])
-        snippets.append(snippet_sentiment)
-        lead_paragraphs.append(lead_paragraph_sentiment)
+        try:
+            snippet_sentiment = predict(snippet)
+            lead_paragraph_sentiment = predict(lead_paragraph)
+        except:
+            print(article['pub_date'])
+        else:
+            # put through the sentiment model
+            #sentiment_and_stock_prices.append([[predict(snippet), predict(lead_paragraph)], stock_prices])
+            predictions.append([snippet_sentiment, lead_paragraph_sentiment])
+            snippets.append(snippet_sentiment)
+            lead_paragraphs.append(lead_paragraph_sentiment)
+
     #creates the statistics of the snippets and lead paragraphs
     snippets_stats = stats_of_a_list(snippets) #make sure to use the list for both of these
     lead_paragraph_stats = stats_of_a_list(lead_paragraphs)
+
     #each day has its own stats and lead paragraph stats as well as stock prices
     stats_and_stock_prices.append([[snippets_stats, lead_paragraph_stats], stock_prices])
 
@@ -300,7 +297,7 @@ for i in range(days_in_a_row, len(stats_and_stock_prices) - num_of_future_days_t
                   stats_and_stock_prices[i][1][5],
                   stats_and_stock_prices[i][1][6],
                   ]) #add the new day, which is future_values[0] before we pop it in the next line
-    
+
     future = i + num_of_future_days_to_take_average_of
     future_values.pop(0)
     future_values.append([stats_and_stock_prices[future][0][0],

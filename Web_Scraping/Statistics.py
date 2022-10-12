@@ -49,7 +49,7 @@ def range(arr):
     return max(arr) - min(arr)
 
 def mid_range(arr):
-    return range/2
+    return range(arr)/2
 
 def standard_deviation(arr):
     average = arithmetic_mean(arr)

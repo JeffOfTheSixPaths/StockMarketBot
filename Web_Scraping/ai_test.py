@@ -14,7 +14,7 @@ sys.path.insert(1, import_path)
 import sentimentAnalysis
 import Statistics
 
-weights_path = '../sentiment_model_weights/cp.cpkt'
+weights_path = 'sentiment_model_weights/cp.cpkt'
 weights_dir = os.path.dirname(weights_path)
 latest = tf.train.latest_checkpoint(weights_dir)
 
