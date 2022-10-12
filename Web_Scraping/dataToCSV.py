@@ -302,15 +302,17 @@ for i in range(days_in_a_row):
 #initial future_values[]
 for i in range(days_in_a_row, days_in_a_row + num_of_future_days_to_take_average_of):
     arr = []
-    for j in stats_and_stock_prices[i][0]:
-        arr.append(j)
     
     for j in stats_and_stock_prices[i][1]:
         arr.append(j)
 
     future_values.append(arr)
 
-compare_stock_type = 0
+compare_stock_type = config['stock compare type']
+#make the future values only have the values of the stock type of your choosing
+for i,e  in enumerate(future_values):
+    future_values[i] = e[compare_stock_type]
+
 #initial values of the average and comparison
 average_of_next_days = Statistics.arithmetic_mean(future_values) #just the average of future_values
 comparison = average_of_next_days > values[-1][1][compare_stock_type] #comparison compares if the average of the next few days is greater than the last price the values ended on
@@ -339,8 +341,6 @@ for i in range(days_in_a_row, len(stats_and_stock_prices) - num_of_future_days_t
     future_values.pop(0)
 
     arr = []
-    for j in stats_and_stock_prices[future][0]:
-        arr.append(j)
     
     for j in stats_and_stock_prices[future][1]:
         arr.append(j)
