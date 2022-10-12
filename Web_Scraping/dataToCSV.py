@@ -1,5 +1,6 @@
 from base64 import standard_b64decode
 from ipaddress import AddressValueError
+from multiprocessing.sharedctypes import Value
 from zoneinfo import available_timezones
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
@@ -10,6 +11,7 @@ import json
 import yfinance as yf
 import os
 import sys
+import Formating_the_APIs as fta
 import_path= '../ML_Prediction/Sentiment'
 sys.path.insert(1, import_path)
 
@@ -17,28 +19,52 @@ import sentimentAnalysis
 import Statistics #not to be confused with the statistics module that's preinstalled, this is from Statistics.py
 #making the data from the other files into a form more usuable for AI.
 
+config = open('../config.json' , 'r')
+config = json.load(config)
 
 def make_ticker(ticker: str): #this might be useless
     return yf.Ticker(ticker)
 
 #the dates is represented as yy-mm-dd
 #the period might need to be changed depending on the length of time we go back
-def get_stock_data(tickers: str, period = '2y', interval = '1d'): #gets the stock prices for the previous period of time
+period = str(config['go back how many years'])+'y'
+def get_stock_data(tickers: str, period = period, interval = '1d'): #gets the stock prices for the previous period of time
     return yf.download(tickers, period = period, interval = interval)
 
-#this json has each of the days and the articles made on each of those days
-json_file_name = 'days_to_articles.json'
-print('Making days_to_articles.json')
-import Formating_the_APIs as fta #this file makes the days_to_articles.json which has the days with the articles published on those days as a dictionary
-print("Finished making days_to_articles.json")
-data = open(json_file_name, 'r')
 
-print("loading the data from the json")
-articles = json.load(data)
-print('loaded the data from the json successfully')
+def make_d2a(): #make d2a (days 2 articles)
+    #this json has each of the days and the articles made on each of those days
+    print('Making days_to_articles.json')
+    fta.make_d2a_nyt() #this file makes the days_to_articles.json which has the days with the articles published on those days as a dictionary
+    print("Finished making days_to_articles.json")
+def load_d2a():
+    data = open('days_to_articles.json', 'r')
 
-print("getting stock prices for the past 2 years")
-stock = 'msft' #change the stock to track here
+    print("loading the data from the json")
+    articles = json.load(data)
+    print('loaded the data from the json successfully')
+    return articles
+
+reuse_json = config["reuse days_to_articles.json?"]
+if reuse_json == "y" and not ('days_to_articles.json' in os.listdir()):
+    print("reusing the days_to_articles.json is on, but couldn't find it\n making it again")
+    make_d2a()
+    articles = load_d2a()
+elif reuse_json == "y" and ('days_to_articles.json' in os.listdir()):
+    print("found days_to_articles.json")
+    articles = load_d2a()
+elif reuse_json == 'n':
+    print("chose not the reuse days_to_articles.json\n making it again")
+    make_d2a()
+    articles = load_d2a()
+elif not ( reuse_json == 'n' or 'y'):
+    raise ValueError(" reuse days_to_articles.json is not 'y' or 'n' ")
+
+
+
+
+print(f"getting stock prices for the past {config['go back how many years']} years")
+stock = config['stock'] #change the stock to track here
 stock_data = get_stock_data(stock) #gets the stock prices for the past two years
 print("got the stock prices")
 
@@ -87,11 +113,27 @@ for index, date in enumerate(list_of_dates[starting_date_index+1:]):
 
 
 #now for the ai
-print("Starting on making the AI")
-print("Downloading necessary files from a google drive")
-print("if the files are missing, open an issue")
-folder_id = '1MifzRW3qeJXdPfVdb7xz8Q6ITjtG6u9A'
-os.system(f'gdown --folder {folder_id}') #downloads the folder called "sentiment_model_weights" from a google drive
+def download_sentiment_data():
+    print("Starting on making the AI")
+    print("Downloading necessary files from a google drive")
+    print("if the files are missing, open an issue")
+    folder_id = '1MifzRW3qeJXdPfVdb7xz8Q6ITjtG6u9A'
+    os.system(f'gdown --folder {folder_id}') #downloads the folder called "sentiment_model_weights" from a google drive
+
+redownload_sentiment_data = config["redownload sentiment analysis model data?"]
+
+if redownload_sentiment_data == 'n':
+    if 'sentiment_model_weights' in os.listdir():
+        print("not redownloading sentiment analysis data")
+    else:
+        print('downloading sentiment analysis data')
+        download_sentiment_data()
+elif redownload_sentiment_data == "y":
+    print('redownloading sentiment analysis data')
+    download_sentiment_data()
+elif not (redownload_sentiment_data == 'y' or redownload_sentiment_data == 'n'):
+    raise ValueError("redownload_sentiment_data is not 'y' or 'n' ")
+
 
 weights_path = 'sentiment_model_weights/cp.cpkt'
 weights_dir = os.path.dirname(weights_path)
@@ -219,8 +261,8 @@ for article_stock in articles_and_stock_price:
 
 #now have the articles with the stats of the sentiment
 
-days_in_a_row = 7 #we are using the data from a week to try and predict if the market will go up or down
-num_of_future_days_to_take_average_of = 4 #take the average price of the next n days (n = 4 here) which will be used to predict if the market will go up or down
+days_in_a_row = config["number of days in a row to analyze"] #we are using the data from a week to try and predict if the market will go up or down
+num_of_future_days_to_take_average_of = config["number of days in the future to take the average of"]  #take the average price of the next n days (n = 4 here) which will be used to predict if the market will go up or down
 
 # headers for the csv:
 # Snippet Dn, Lead Paragraph Dn, Open Dn, High Dn, Low Dn, Low Dn, Close Dn, Adj Close Dn, Volume Dn where n is the day #
@@ -248,29 +290,25 @@ future_values = []
 for i in range(days_in_a_row):
     # [i][0] is part of the [snippet, lead paragraph]
     # [i][1] is part of the stock prices
-    values.append([stats_and_stock_prices[i][0][0],
-                  stats_and_stock_prices[i][0][1],
-                  stats_and_stock_prices[i][1][0],
-                  stats_and_stock_prices[i][1][1],
-                  stats_and_stock_prices[i][1][2],
-                  stats_and_stock_prices[i][1][3],
-                  stats_and_stock_prices[i][1][4],
-                  stats_and_stock_prices[i][1][5],
-                  stats_and_stock_prices[i][1][6],
-                  ])
+    arr = []
+    for j in stats_and_stock_prices[i][0]:
+        arr.append(j)
+    
+    for j in stats_and_stock_prices[i][1]:
+        arr.append(j)
+
+    values.append(arr)
 
 #initial future_values[]
 for i in range(days_in_a_row, days_in_a_row + num_of_future_days_to_take_average_of):
-    future_values.append([stats_and_stock_prices[i][0][0],
-                  stats_and_stock_prices[i][0][1],
-                  stats_and_stock_prices[i][1][0],
-                  stats_and_stock_prices[i][1][1],
-                  stats_and_stock_prices[i][1][2],
-                  stats_and_stock_prices[i][1][3],
-                  stats_and_stock_prices[i][1][4],
-                  stats_and_stock_prices[i][1][5],
-                  stats_and_stock_prices[i][1][6],
-                  ])
+    arr = []
+    for j in stats_and_stock_prices[i][0]:
+        arr.append(j)
+    
+    for j in stats_and_stock_prices[i][1]:
+        arr.append(j)
+
+    future_values.append(arr)
 
 compare_stock_type = 0
 #initial values of the average and comparison
@@ -287,29 +325,27 @@ print(data_to_return)
 
 for i in range(days_in_a_row, len(stats_and_stock_prices) - num_of_future_days_to_take_average_of - 1 ):
     values.pop(0) #get rid of the oldest day
-    values.append([stats_and_stock_prices[i][0][0],
-                  stats_and_stock_prices[i][0][1],
-                  stats_and_stock_prices[i][1][0],
-                  stats_and_stock_prices[i][1][1],
-                  stats_and_stock_prices[i][1][2],
-                  stats_and_stock_prices[i][1][3],
-                  stats_and_stock_prices[i][1][4],
-                  stats_and_stock_prices[i][1][5],
-                  stats_and_stock_prices[i][1][6],
-                  ]) #add the new day, which is future_values[0] before we pop it in the next line
+
+    arr = []
+    for j in stats_and_stock_prices[i][0]:
+        arr.append(j)
+    
+    for j in stats_and_stock_prices[i][1]:
+        arr.append(j)
+
+    values.append(arr) #add the new day, which is future_values[0] before we pop it in the next line
 
     future = i + num_of_future_days_to_take_average_of
     future_values.pop(0)
-    future_values.append([stats_and_stock_prices[future][0][0],
-                  stats_and_stock_prices[future][0][1],
-                  stats_and_stock_prices[future][1][0],
-                  stats_and_stock_prices[future][1][1],
-                  stats_and_stock_prices[future][1][2],
-                  stats_and_stock_prices[future][1][3],
-                  stats_and_stock_prices[future][1][4],
-                  stats_and_stock_prices[future][1][5],
-                  stats_and_stock_prices[future][1][6],
-                  ])
+
+    arr = []
+    for j in stats_and_stock_prices[future][0]:
+        arr.append(j)
+    
+    for j in stats_and_stock_prices[future][1]:
+        arr.append(j)
+
+    future_values.append(arr)
 
     average_of_next_days = Statistics.arithmetic_mean(future_values) #just the average of future_values
     comparison = average_of_next_days > values[-1][1][compare_stock_type] #comparison compares if the average of the next few days is greater than the last price the values ended on

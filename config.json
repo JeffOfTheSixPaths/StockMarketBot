@@ -1,0 +1,12 @@
+{
+    "go back how many years": 1,
+    "go back how many month": 0,
+    "go back how many days": 0,
+    "nyt api key": "",
+    "reuse days_to_articles.json?": "y",
+    "redownload sentiment analysis model data?": "n",
+    "stock": "msft",
+    "number of days in a row to analyze": 7,
+    "number of days in the future to take the average of": 4,
+    "csv name": "LETSGO.csv"
+}

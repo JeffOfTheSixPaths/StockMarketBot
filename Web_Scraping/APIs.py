@@ -129,7 +129,7 @@ def get_nyt(date, nyt_key): #nyt archive api currently
 	"word_count"
 
 
-	^^ is everything I think would play any use
+	^^ is everything I think would be any use
 	"""
 if  __name__ == '__main__':
 	get_nyt('/2020/9', "")

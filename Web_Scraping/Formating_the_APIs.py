@@ -5,9 +5,12 @@ import json
 import os
 import time
 
+config = open('../config.json' , 'r')
+config = json.load(config)
+
 today = date.today()
 
-go_back = 2 #years, can do a version for months and days if you need, but then it can get a little weird with over/underflows
+go_back = config['go back how many years'] #years, can do a version for months and days if you need, but then it can get a little weird with over/underflows
 
 #subtracts go_back from the current year
 init_date = date(today.year - go_back, today.month, today.day)
@@ -34,63 +37,65 @@ months_to_articles = { #the articles that appear in each month in the form of a 
                         #'2021-8': [list of articles], etc.
                     }
 
-api_key = ""
-if api_key == "":
-    raise Exception("You forgot an api key")
-for month in list_of_months: #
-    print(f'{month.year}-{month.month}')
-    print(f' the request is : /{month.year}/{month.month}' )
-    months_to_articles[f'{month.year}-{month.month}'] = APIs.get_nyt(f'/{month.year}/{month.month}', api_key)# need to replace all NaN with None
-    # ^ the dataframe is normalized
 
-    # a little pseudocode -> months_to_articles[month] = get_nyt(month, api_key)
-    #each element is a dataframe/dictionary in months_to_articles
+def make_d2a_nyt():
+    nyt_api_key = config['nyt api key']
+    if nyt_api_key == "":
+        raise Exception("You forgot an api key")
+    for month in list_of_months: #
+        print(f'{month.year}-{month.month}')
+        print(f' the request is : /{month.year}/{month.month}' )
+        months_to_articles[f'{month.year}-{month.month}'] = APIs.get_nyt(f'/{month.year}/{month.month}', nyt_api_key)# need to replace all NaN with None
+        # ^ the dataframe is normalized
 
-days_to_articles = {# same thing as months_to_articles but with days.
-                    #ex, 2021-12-31 : <array of dictionaries>
-                    }
+        # a little pseudocode -> months_to_articles[month] = get_nyt(month, api_key)
+        #each element is a dataframe/dictionary in months_to_articles
 
-NaN = None #supposed to stop the program from throwing error when it encounters NaN in the response from the apis
+    days_to_articles = {# same thing as months_to_articles but with days.
+                        #ex, 2021-12-31 : <array of dictionaries>
+                        }
 
-'''
-for the for loop below:
+    NaN = None #supposed to stop the program from throwing error when it encounters NaN in the response from the apis
 
-we assign the current month to a dataframe and then sort that dataframe by the publish date.
+    '''
+    for the for loop below:
 
-we then go through each publish date and remove the T00:00:00 from them (for example 2022-08-01T00:00:00 to 2022-08-01).
-we now go through each article individually and add their keys to a dictionary article_dictionary which will later be used to be appended into days_to_articles.
-continuing to go through each individual article, we add the publish date to the dictionary days_to_articles. if the publish date is not there it adds an empty
-list as its value. the article (article_dictionary) is then appended to that list.
-^is continued for all the articles and then saved as a json.
-'''
-for month in months_to_articles:
-    dataframe = months_to_articles[month]
+    we assign the current month to a dataframe and then sort that dataframe by the publish date.
 
-    sorted_dataframe = dataframe.sort_values(by='pub_date')
+    we then go through each publish date and remove the T00:00:00 from them (for example 2022-08-01T00:00:00 to 2022-08-01).
+    we now go through each article individually and add their keys to a dictionary article_dictionary which will later be used to be appended into days_to_articles.
+    continuing to go through each individual article, we add the publish date to the dictionary days_to_articles. if the publish date is not there it adds an empty
+    list as its value. the article (article_dictionary) is then appended to that list.
+    ^is continued for all the articles and then saved as a json.
+    '''
+    for month in months_to_articles:
+        dataframe = months_to_articles[month]
 
-    for index, element in enumerate(sorted_dataframe['pub_date']):
-        # index is the id of the article it's working on
-        sorted_dataframe['pub_date'][index] = str(element).split('T')[0] #get just the YY-MM-DD in the timestamp
+        sorted_dataframe = dataframe.sort_values(by='pub_date')
 
-        #going through each article
-        article_dictionary = {}
-        for key in sorted_dataframe:
-            article_dictionary[key] = str(sorted_dataframe[key][index])
+        for index, element in enumerate(sorted_dataframe['pub_date']):
+            # index is the id of the article it's working on
+            sorted_dataframe['pub_date'][index] = str(element).split('T')[0] #get just the YY-MM-DD in the timestamp
 
-        try:
-            type(days_to_articles[str(article_dictionary['pub_date'])]) == type([]) #if the element of a key is a list
-        except:
-            days_to_articles[str(article_dictionary['pub_date'])] = []
+            #going through each article
+            article_dictionary = {}
+            for key in sorted_dataframe:
+                article_dictionary[key] = str(sorted_dataframe[key][index])
 
-        days_to_articles[str(article_dictionary['pub_date'])].append(article_dictionary) #the date of the article is the key, and the article gets appended to a array of dataframes about the days'
-        # articles
+            try:
+                type(days_to_articles[str(article_dictionary['pub_date'])]) == type([]) #if the element of a key is a list
+            except:
+                days_to_articles[str(article_dictionary['pub_date'])] = []
 
-        #^ is a dictionary, so save it with json
+            days_to_articles[str(article_dictionary['pub_date'])].append(article_dictionary) #the date of the article is the key, and the article gets appended to a array of dataframes about the days'
+            # articles
 
-#json save days_to_articles
-f = open("days_to_articles.json", 'w')
-json.dump(days_to_articles, f)
-f.close()
+            #^ is a dictionary, so save it with json
+
+    #json save days_to_articles
+    f = open("days_to_articles.json", 'w')
+    json.dump(days_to_articles, f)
+    f.close()
 
 '''
 
