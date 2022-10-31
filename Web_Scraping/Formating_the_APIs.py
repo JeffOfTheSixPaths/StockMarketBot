@@ -37,9 +37,8 @@ months_to_articles = { #the articles that appear in each month in the form of a 
                         #'2021-8': [list of articles], etc.
                     }
 
-
+nyt_api_key = config['nyt archive api key']
 def make_d2a_nyt():
-    nyt_api_key = config['nyt api key']
     if nyt_api_key == "":
         raise Exception("You forgot an api key")
     for month in list_of_months: #
