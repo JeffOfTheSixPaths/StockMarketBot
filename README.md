@@ -1,11 +1,11 @@
 # StockMarketBot
 (Very early development) A bot that will eventually try to predict stocks.
-currently does not do anything
+currently is unable to predict.
 
 
 to do:
-  - format the data from the sentiment analysis model into a time progression csv
   - have the webscraper get more data
+  - make an ai to use the data made by the web scraper
 
 dependencies:
 ```
