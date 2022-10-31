@@ -269,15 +269,12 @@ num_of_future_days_to_take_average_of = config["number of days in the future to 
 #after those there will be more headers of "average of the next {num_of_future_days_to_take_average_of}", comparison at the very end
 #8 commas
 
-headers = []
+headers = [] #headers of the csv
+headers.append('pop this') #used to initilize the dataframe with some junk values that will be removed later
 for day in range(1, days_in_a_row + 1): #the +1 is since range isn't inclusive
     headers.append(f'Snippet D{day}')
     headers.append(f'Lead Paragraph D{day}')
-    headers.append(f'Open D{day}')
-    headers.append(f'High D{day}')
-    headers.append(f'Low D{day}')
-    headers.append(f'Close D{day}')
-    headers.append(f'Volume D{day}')
+    headers.append(f'Prices D{day}')
 
 headers.append(f'average of the next {num_of_future_days_to_take_average_of}')
 headers.append('comparison')
@@ -286,27 +283,32 @@ print(headers)
 values = []
 future_values = []
 
-#initial values[]
+def convert_data(arr): #converts data into a more readable form
+    for a,k in enumerate(arr):
+            k = k.tolist()[0][0] #each element k is in the form [[k]] even though there's only a single element
+            if k == np.inf:
+                k = 99
+            elif k == np.nan:
+                k = 0
+            arr[a] = k # .tolist()[0][0]
+    return arr
+
 for i in range(days_in_a_row):
     # [i][0] is part of the [snippet, lead paragraph]
     # [i][1] is part of the stock prices
     arr = []
     for j in stats_and_stock_prices[i][0]:
+        convert_data(j)
         arr.append(j)
-    
-    for j in stats_and_stock_prices[i][1]:
-        arr.append(j)
+
+    arr.append(stats_and_stock_prices[i][1])
 
     values.append(arr)
 
 #initial future_values[]
 for i in range(days_in_a_row, days_in_a_row + num_of_future_days_to_take_average_of):
-    arr = []
-    
-    for j in stats_and_stock_prices[i][1]:
-        arr.append(j)
+    future_values.append(stats_and_stock_prices[i][1])
 
-    future_values.append(arr)
 
 compare_stock_type = config['stock compare type']
 #make the future values only have the values of the stock type of your choosing
@@ -320,66 +322,90 @@ comparison = average_of_next_days > values[-1][1][compare_stock_type] #compariso
 #the index are as follows from 0 - 6
 #Open, High, Low, Low, Close, Adj Close, Volume
 
-dataframe_of_intial_data = pd.DataFrame(values + future_values + [average_of_next_days, comparison]) # pretty much concats the data (ex [1,2] + [3,4] = [1,2,3,4])
-data_to_return = dataframe_of_intial_data.transpose() #makes the data horizontal instead of vertical
-data_to_return.columns = headers
-print(data_to_return)
+dict_for_formating = {}
+junk_values = [1,2]
+df_of_all_data = pd.DataFrame({0:[junk_values]}) #allows the dataframe to store the array in one cell
+for day in values:
+    print(day[2])
+    df = pd.DataFrame({
+        0:[day[0]], #should be the snippet sentiment
+        1:[day[1]], #should be the lead paragraph sentiment
+        2:[day[2]] #should be all the different prices
+    })
+    df_of_all_data = pd.concat([df_of_all_data, df], axis = 1)
+
+df_of_all_data.head()
+
+#future values do not need to be a dataframe since the ai does not feed on future_values but instead *could* need the average
+a = pd.DataFrame([average_of_next_days, comparison]).transpose()
+dataframe_of_average_and_comparison = a
+#print(future_values_dataframe.head())
+print(dataframe_of_average_and_comparison.head())
+
+df_of_all_data = pd.concat([df_of_all_data, dataframe_of_average_and_comparison], axis = 1)
+df_of_all_data.columns = headers
+df_of_all_data.pop('pop this')
+
+
+def convert_data(arr): #converts data into a more readable form
+    for a,k in enumerate(arr):
+        try:
+            k = k.tolist()[0][0] #each element k is in the form [[k]] even though there's only a single element
+        except:
+            pass
+        if k == np.inf:
+            k = 99
+        elif k == np.nan or k == None:
+            k = 0
+        arr[a] = k # .tolist()[0][0]
+    return arr
+
 
 for i in range(days_in_a_row, len(stats_and_stock_prices) - num_of_future_days_to_take_average_of - 1 ):
+    #adjusting the array of values
+    '''
+    for both values and future_values,
+        get rid of the oldest day's data
+        append to the array the next avalible day's data
+    '''
     values.pop(0) #get rid of the oldest day
 
     arr = []
     for j in stats_and_stock_prices[i][0]:
+        convert_data(j)
         arr.append(j)
-    
-    for j in stats_and_stock_prices[i][1]:
-        arr.append(j)
+
+    arr.append(stats_and_stock_prices[i][1]) #adds the stock prices for that day
 
     values.append(arr) #add the new day, which is future_values[0] before we pop it in the next line
 
+    #adjusting the values of the future days
     future = i + num_of_future_days_to_take_average_of
     future_values.pop(0)
 
-    arr = []
-    
-    for j in stats_and_stock_prices[future][1]:
-        arr.append(j)
-
-    future_values.append(arr)
+    future_values.append(stats_and_stock_prices[future][1][compare_stock_type])
 
     average_of_next_days = Statistics.arithmetic_mean(future_values) #just the average of future_values
     comparison = average_of_next_days > values[-1][1][compare_stock_type] #comparison compares if the average of the next few days is greater than the last price the values ended on
-    list_of_new_data = values + future_values + [average_of_next_days, comparison]
 
-    data_to_return.loc[len(data_to_return)] = list_of_new_data #appends data to the end of the dataframe
+    dict_for_formating = {}
+    df_of_sentiment_and_prices = pd.DataFrame({0:[junk_values]}) #allows the dataframe to store the array in one cell
 
+    #converts the arrays into a form that can be put into dataframes, this will have to be changed manually if more data is going to be put in
+    for day in values:
+        df = pd.DataFrame({
+            0:[day[0]], #should be the snippet sentiment
+            1:[day[1]], #should be the lead paragraph sentiment
+            2:[day[2]] #should be all the different prices
+        })
+        df_of_sentiment_and_prices = pd.concat([df_of_sentiment_and_prices, df], axis = 1)
 
-data_to_return.to_csv("IDIDIT.csv") #change this later to something more descriptive
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    dataframe_of_average_and_comparison = pd.DataFrame([average_of_next_days, comparison]).transpose()
+    new_data = pd.concat([df_of_sentiment_and_prices, dataframe_of_average_and_comparison], axis = 1)
+    new_data.columns = headers
+    new_data.pop('pop this') #removes the column of junk data before concating the rest of the data
+    df_of_all_data = pd.concat([df_of_all_data, new_data], axis = 0) #appends new data to the a new row at the end of the dataframe
+    del new_data
 
 
-
-
-
-
-
-
-
-
-
-
-    #making some whitespace with this comment
+df_of_all_data.to_csv(config['csv name'], sep = '\t') #change this later to something more descriptive
