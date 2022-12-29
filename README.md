@@ -14,7 +14,7 @@ pip install lxml
 pip install yfinance
 pip install numpy
 pip install pandas
-pip install tensorflow
+pip install tensorflow==2.8.0
 pip install tensorflow_datasets
 pip install keras
 pip install matplotlib
