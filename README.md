@@ -5,6 +5,7 @@ currently is unable to predict.
 
 to do:
   - have the webscraper get more data
+  - make the sentiment model better
   - make an ai to use the data made by the web scraper
 
 dependencies:
