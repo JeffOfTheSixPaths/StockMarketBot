@@ -4,6 +4,11 @@ from datetime import date
 import json
 import os
 import time
+import threading
+
+
+nyt_d2a = []
+guard_d2a = []
 
 config = open('../config.json' , 'r')
 config = json.load(config)
@@ -29,7 +34,6 @@ for i in range(len(list_of_dates)):
 init_date = f'{init_date.year}-{init_date.month}-01'
 list_of_months = pd.date_range(start = init_date, end = today, freq = 'MS', inclusive = 'both')
 
-print(list_of_months)
 list_of_months = list_of_months.tolist()
 
 #months_to_articles[some_month] == the articles in that month
@@ -40,10 +44,14 @@ months_to_articles = { #the articles that appear in each month in the form of a 
 nyt_api_key = config['nyt archive api key']
 def make_d2a_nyt():
     if nyt_api_key == "":
-        raise Exception("You forgot an api key")
+        raise Exception("nyt archive api key is empty")
+
+    """
+    this function gets every month's articles and puts them in a dictionary with the label being the month date. 
+    It then goes through every article and puts them in a dictionary with the key being the date
+    """
     for month in list_of_months: #
-        print(f'{month.year}-{month.month}')
-        print(f' the request is : /{month.year}/{month.month}' )
+        print(f'requesting nyt with the date /{month.year}/{month.month}' )
         months_to_articles[f'{month.year}-{month.month}'] = APIs.get_nyt(f'/{month.year}/{month.month}', nyt_api_key)# need to replace all NaN with None
         # ^ the dataframe is normalized
 
@@ -90,11 +98,34 @@ def make_d2a_nyt():
             # articles
 
             #^ is a dictionary, so save it with json
-
+    nyt_d2a.append(days_to_articles)
+    return days_to_articles
     #json save days_to_articles
     f = open("days_to_articles.json", 'w')
     json.dump(days_to_articles, f)
     f.close()
+
+guard_api_key = config["theguardian api key"]
+def make_d2a_theguardian():
+    if guard_api_key == "":
+        raise ValueError("guardian api key is empty")
+        
+    phrases = config["phrases for filtering"]
+
+    from_date = init_date # this is the current date minus how many years the config file specifies
+    
+    guardian = APIs.get_guardian(from_date=from_date, phrases=phrases, api_key=guard_api_key)
+    
+    days_to_articles = {}
+    for i in guardian:
+        try:
+            days_to_articles[i['webPublicationDate']].append(i)
+        except:
+            print(i)
+            days_to_articles[i['webPublicationDate']] = [i]
+    guard_d2a.append(days_to_articles)
+    return days_to_articles
+    
 
 '''
 
@@ -106,3 +137,54 @@ days_to_articles = {
 }
 
 '''
+
+def get_d2a():
+    #making multiple threads so that we don't have to wait for all of the requests to be over before we can start the next one
+    nyt_thread = threading.Thread(target = make_d2a_nyt)
+    guard_thread = threading.Thread(target = make_d2a_theguardian)
+
+    print('starting the threads')
+    nyt_thread.start()
+    guard_thread.start()
+
+    nyt_thread.join()
+    guard_thread.join()
+    print('threads are finished')
+    #print(f'the number of threads: {threading.active_count()}') this prints 1
+
+    see_nyt = False
+    if see_nyt:
+        f = open("nyt_d2a.json",'w')
+        json.dump(nyt_d2a[0],f) #it's nyt_d2a[0] because the d2a is appended to an empty array in order to have it returned
+        f.close()
+
+    see_guardian = False
+    if see_guardian:
+        f = open("guardian_d2a.json", 'w')
+        json.dump(guard_d2a[0], f) #it's guard_d2a[0] because the d2a is appended to an empty array in order to have it returned
+        f.close()
+    
+    
+    
+
+    days_to_articles = {}
+    for key, element in nyt_d2a[0].items(): #it's nyt_d2a[0] because the d2a is appended to an empty array in order to have it returned
+        days_to_articles[key] = {}
+        days_to_articles[key]['nyt'] = element
+    
+
+    for key, element in guard_d2a[0].items(): #it's guard_d2a[0] because the d2a is appended to an empty array in order to have it returned
+        try:
+            days_to_articles[key]['theguardian'] = element
+        except:
+            days_to_articles[key] = {}
+            days_to_articles[key]['theguardian'] = element
+
+    
+    f = open("days_to_articles.json", 'w')
+    json.dump(days_to_articles, f, indent=2)
+    f.close()
+    return days_to_articles
+
+if __name__ == '__main__':
+    get_d2a()

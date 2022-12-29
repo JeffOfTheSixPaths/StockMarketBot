@@ -12,6 +12,8 @@ import yfinance as yf
 import os
 import sys
 import Formating_the_APIs as fta
+
+#this just imports sentimentAnalysis.py in this directory
 import_path= '../ML_Prediction/Sentiment'
 sys.path.insert(1, import_path)
 
@@ -19,6 +21,7 @@ import sentimentAnalysis
 import Statistics #not to be confused with the statistics module that's preinstalled, this is from Statistics.py
 #making the data from the other files into a form more usuable for AI.
 
+print(os.getcwd())
 config = open('../config.json' , 'r')
 config = json.load(config)
 
@@ -27,7 +30,8 @@ def make_ticker(ticker: str): #this might be useless
 
 #the dates is represented as yy-mm-dd
 #the period might need to be changed depending on the length of time we go back
-period = str(config['go back how many years'])+'y'
+period = str(config['go back how many years'])+'y' #  ex. config['go back how many years] = 1 then period = 1 + 'y' = '1y'
+
 def get_stock_data(tickers: str, period = period, interval = '1d'): #gets the stock prices for the previous period of time
     return yf.download(tickers, period = period, interval = interval)
 
@@ -35,8 +39,9 @@ def get_stock_data(tickers: str, period = period, interval = '1d'): #gets the st
 def make_d2a(): #make d2a (days 2 articles)
     #this json has each of the days and the articles made on each of those days
     print('Making days_to_articles.json')
-    fta.make_d2a_nyt() #this file makes the days_to_articles.json which has the days with the articles published on those days as a dictionary
+    fta.get_d2a() #this file makes the days_to_articles.json which has the days with the articles published on those days as a dictionary
     print("Finished making days_to_articles.json")
+
 def load_d2a():
     data = open('days_to_articles.json', 'r')
 
@@ -45,6 +50,7 @@ def load_d2a():
     print('loaded the data from the json successfully')
     return articles
 
+#checks for reusing an existing days_to_articles.json
 reuse_json = config["reuse days_to_articles.json?"]
 if reuse_json == "y" and not ('days_to_articles.json' in os.listdir()):
     print("reusing the days_to_articles.json is on, but couldn't find it\n making it again")
@@ -61,8 +67,6 @@ elif not ( reuse_json == 'n' or 'y'):
     raise ValueError(" reuse days_to_articles.json is not 'y' or 'n' ")
 
 
-
-
 print(f"getting stock prices for the past {config['go back how many years']} years")
 stock = config['stock'] #change the stock to track here
 stock_data = get_stock_data(stock) #gets the stock prices for the past two years
@@ -74,6 +78,7 @@ dates_of_the_stock = {} #list of all the dates that the stock was traded for as 
 stock_data['Date'] = stock_data.index #just adds the Date index as a coloumn
 
 #making a dictionary with the date as the key and stock data on that day as the values
+#this gives a date to stock price conversion
 for index, date in enumerate(stock_data['Date']): #The date and the corresponding stock's prices for that day
     dates_of_the_stock[str(date).split(' ')[0]] = [stock_data['Open'][index], stock_data['High'][index], stock_data['Low'][index], stock_data['Close'][index], stock_data['Adj Close'][index], stock_data['Volume'][index]]
 
@@ -82,8 +87,12 @@ for index, date in enumerate(stock_data['Date']): #The date and the correspondin
 #list_of_stock_dates is a list of the dates that the stock has a price on
 list_of_stock_dates = list(dates_of_the_stock.keys())# each dates is in the format yy-mm-dd 00:00:00
 first_stock_date = list_of_stock_dates[0] #the first date in list_of_stock_dates which is the earliest date that exists
+#nyt not used for any specific reason besides that it has almost every single date
+
 print(f'the first date recognized is {first_stock_date}')
 first_stock_date = str(first_stock_date).split(' ')[0] #removes the " 00:00:00" from the timestamp
+
+
 
 #[articles,stock prices]
 articles_and_stock_price = [[articles[first_stock_date], dates_of_the_stock[first_stock_date]]] #this is a 2d array
@@ -95,7 +104,7 @@ for index, date in enumerate(list_of_dates):
         starting_date_index = index
         break
 
-print(starting_date_index)
+#print(starting_date_index)
 
 for index, date in enumerate(list_of_dates[starting_date_index+1:]):
     if date in list_of_stock_dates:
@@ -104,11 +113,12 @@ for index, date in enumerate(list_of_dates[starting_date_index+1:]):
         elif date not in dates_of_the_stock.keys():
             print(f'{date} in not in dates_of_the_stock')
         articles_and_stock_price.append([articles[date], dates_of_the_stock[date]])
+
     else:
-        #need to get the last date
-        last_values = articles_and_stock_price[-1]
+        #if the date is not in the list of the stocks prices, then this gets the last stock price and assigns it to the current date
+        last_values = articles_and_stock_price[-1] #gets last stock price
         last_stock_prices = last_values[1] #the second index is the array of stock prices
-        articles_and_stock_price.append([articles[date], last_stock_prices])
+        articles_and_stock_price.append([articles[date], last_stock_prices]) #assigns the date the last known stock price
 
 
 
@@ -134,6 +144,7 @@ elif redownload_sentiment_data == "y":
 elif not (redownload_sentiment_data == 'y' or redownload_sentiment_data == 'n'):
     raise ValueError("redownload_sentiment_data is not 'y' or 'n' ")
 
+use_s140 = False # Putting this to True will break the code, but this will be kept in here in case I use the s140 dataset in my sentiment analysis model sometime in the future
 
 weights_path = 'sentiment_model_weights/cp.cpkt'
 weights_dir = os.path.dirname(weights_path)
@@ -141,23 +152,29 @@ latest = tf.train.latest_checkpoint(weights_dir)
 
 train_text = 'sentiment_model_weights/sentiment_text.csv'
 train_sentiment = 'sentiment_model_weights/sentiment_sentiment.npy'
-s140_text = 'sentiment_model_weights/sentiment140_text.csv'
-s140_sentiment = 'sentiment_model_weights/sentiment140_sentiment.npy'
+if use_s140:
+    s140_text = 'sentiment_model_weights/sentiment140_text.csv'
+    s140_sentiment = 'sentiment_model_weights/sentiment140_sentiment.npy'
 
 # x_text holds the sentences and x_sentiment has the sentiment to x_text's sentences
 print("loading the data")
 train_text = pd.read_csv(train_text)
 train_sentiment = np.load(train_sentiment)
 train_text.pop('Unnamed: 0')
-s140_text = pd.read_csv(s140_text)
-s140_sentiment = np.load(s140_sentiment)
-s140_text.pop('Unnamed: 0')
+if use_s140:
+    s140_text = pd.read_csv(s140_text)
+    s140_sentiment = np.load(s140_sentiment)
+    s140_text.pop('Unnamed: 0')
 print("loaded the data")
 
 print("converting data to a usable form for the ai")
 train_text = tf.convert_to_tensor(train_text)
-s140_tensor = tf.convert_to_tensor(s140_text)
-train_text = tf.concat([train_text,s140_tensor], 0)
+
+if use_s140:
+    s140_tensor = tf.convert_to_tensor(s140_text)
+    train_text = tf.concat([train_text,s140_tensor], 0)
+
+
 train_sentiment = tf.convert_to_tensor(train_sentiment)
 train_dataset = tf.data.Dataset.from_tensor_slices((train_text,train_sentiment))
 print("converted")
@@ -174,10 +191,10 @@ test_sentences = [
                     'I love this',
                     'I hate this',
                     'Gamers are oppressed',
-                    'I fucking love dogs', #using the f-word here as it can be used with different connotations in different sentences
-                    'I fucking hate dogs', #it can also be used as a stronger form of "really"
                     'I really love dogs',
                     'I really hate dogs',
+                    'I fucking love dogs', #using the f-word here as it can be used with different connotations in different sentences
+                    'I fucking hate dogs', #it can also be used as a stronger form of "really"
                     'I love dogs',
                     'I hate dogs',
                     'Rubiks cubes are a neat little thing',
@@ -221,7 +238,6 @@ for article_stock in articles_and_stock_price:
     #article_stock is a 2d list of [articles, stock_prices]
     articles = article_stock[0]
     stock_prices = article_stock[1]
-    predictions = []
     snippets = []
     lead_paragraphs = []
 
@@ -229,14 +245,13 @@ for article_stock in articles_and_stock_price:
     for article in articles:
         get the snippet and the lead paragraph
         get the sentiment of the snippet and lead paragraph
-        then put the sentiment of both the snippet and lead paragraph into the array of predictions
-        and put the sentiment of the snippet into the array snippets
+        then put the sentiment of the snippet into the array snippets
         and put the sentiment of the lead paragraph into the array lead_paragraphs
 
         we put the sentiment into snippets and lead_paragraphs so that we can use stats_of_a_list() on both of them easily
     '''
 
-    for article in articles:
+    for article in articles['nyt']:
         snippet = article['snippet']
         lead_paragraph = article['lead_paragraph']
         try:
@@ -246,10 +261,20 @@ for article_stock in articles_and_stock_price:
             print(article['pub_date'])
         else:
             # put through the sentiment model
-            #sentiment_and_stock_prices.append([[predict(snippet), predict(lead_paragraph)], stock_prices])
-            predictions.append([snippet_sentiment, lead_paragraph_sentiment])
             snippets.append(snippet_sentiment)
             lead_paragraphs.append(lead_paragraph_sentiment)
+    try:
+        for article in articles['theguardian']:
+            snippet = article['webTitle']
+            try:
+                snippet_sentiment = predict(snippet)
+            except:
+                print(article['webPublicationDate'])
+            
+            else:
+                snippets.append(snippet_sentiment)
+    except:
+        print('couldnt guardian')
 
     #creates the statistics of the snippets and lead paragraphs
     snippets_stats = stats_of_a_list(snippets) #make sure to use the list for both of these
