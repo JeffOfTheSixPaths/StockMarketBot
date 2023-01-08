@@ -12,6 +12,7 @@ from sklearn.preprocessing import MinMaxScaler, LabelEncoder, Normalizer
 from Preprocessing_tools import NDNormalizer
 import matplotlib.pyplot as plt
 
+split_percent = 0.75
 
 #Preproccess data
 def get_numpy(csv_name, label, size):
@@ -75,13 +76,25 @@ print(dataset.shape)
 
 #start preprocessing
 norm = NDNormalizer() #class to normalize data
+le = LabelEncoder()
 
-df = pd.read_csv("IDIDIT.csv", usecols=[
+comparison_df = pd.read_csv("IDIDIT.csv", usecols=[
         'comparison'], sep='\t') #read csv with usecols parameter
+
 norm.fit(dataset)
 normalized_dataset = norm.transform(dataset)
-print(normalized_dataset)
 
+le.fit(comparison_df)
+labels = le.transform(comparison_df)
+
+#split dataset into testing and training (75/25)
+split_data = int(len(normalized_dataset) * split_percent)
+train_X = normalized_dataset[:split_data]
+test_X = normalized_dataset[split_data:]
+
+split_labels = int(len(labels) * split_percent)
+train_Y = labels[:split_labels]
+test_Y = labels[split_labels:]
 
 
 #create model, start fitting and training it
