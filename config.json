@@ -1,8 +1,10 @@
 {
     "go back how many years": 1,
-    "go back how many month": 0,
-    "go back how many days": 0,
+    "go back how many month: currently not implemented": 0,
+    "go back how many days: currently not implemented": 0,
     "nyt archive api key": "",
+    "theguardian api key": "",
+    "phrases for filtering":["economy", "stock", "investment", "inflation","unemployment","recession","depression","economic", "short sell", "shorting", "billion", "million", "shortage", "silicon", "oil", "surplus", "merge", "industry", "company"],
     "reuse days_to_articles.json?": "y",
     "redownload sentiment analysis model data?": "n",
     "stock": "msft",
