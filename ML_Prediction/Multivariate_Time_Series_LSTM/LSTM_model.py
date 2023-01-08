@@ -5,8 +5,12 @@ from tensorflow import keras
 from tensorflow.keras import datasets, layers, models
 import pandas as pd
 import numpy as np
-from keras.layers import LSTM
-#from sklearn.preprocessing import MinMaxScaler
+from keras.layers import LSTM, Dense
+#from keras.layers import Sequential
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import MinMaxScaler, LabelEncoder, Normalizer
+from Preprocessing_tools import NDNormalizer
+import matplotlib.pyplot as plt
 
 
 #Preproccess data
@@ -35,6 +39,13 @@ def get_numpy(csv_name, label, size):
 
     return arr
 
+'''
+def create_LSTM():
+    inputs = layers.Input(shape=(355,7,8))
+    layer1 = LSTM(128, input_shape=())(inputs)
+    outputs = layers.Dense(1, activation="relu")(layer1)
+    return keras.Model(inputs=inputs, outputs=outputs)
+'''
 
 '''
 the keras.layers.LSTM() object takes inputs in the form of 3D tensor with shape [batch, timesteps, feature].
@@ -44,7 +55,7 @@ Firstly, the prices will be appended to the sentiment features in the features a
 then, the tensor will be reshaped to be 3D, before the second and third axis is swapped
 this process will occur for the rest of the days before being appended as timesteps
 '''
-dataset = get_numpy("IDIDIT.csv", "Lead Paragraph D1", 16)
+dataset = get_numpy("IDIDIT.csv", "Lead Paragraph D1", 16) #start with first timestep of sentiment statistics
 dataset = np.concatenate((dataset, get_numpy("IDIDIT.csv", "Prices D1", 6)), axis=1) #concatenate prices to sentiment
 dataset = dataset.reshape(-1,22,1) #reshape to be 3D
 dataset = dataset.swapaxes(1, 2) #swap axis for tensor to be in the correct LSTM format
@@ -57,14 +68,23 @@ for i in range(2,8):
     col = np.concatenate((col, get_numpy("IDIDIT.csv", "Prices D" + str(i), 6)), axis=1)
     col = col.reshape(-1,22,1)
     col = col.swapaxes(1, 2)
-    
+
     dataset = np.concatenate((dataset, col), axis=1)
 
+print(dataset.shape)
+
+#start preprocessing
+norm = NDNormalizer() #class to normalize data
+
+df = pd.read_csv("IDIDIT.csv", usecols=[
+        'comparison'], sep='\t') #read csv with usecols parameter
+norm.fit(dataset)
+normalized_dataset = norm.transform(dataset)
+print(normalized_dataset)
 
 
 
-def create_LSTM():
-    inputs = layers.Input(shape=(355,7,8))
-    layer1 = LSTM(128, input_shape=())(inputs)
-    outputs = layers.Dense(1, activation="relu")(layer1)
-    return keras.Model(inputs=inputs, outputs=outputs)
+#create model, start fitting and training it
+#model = create_LSTM()
+
+
