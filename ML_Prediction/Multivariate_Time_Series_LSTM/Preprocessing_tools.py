@@ -1,4 +1,5 @@
-from sklearn.base import TransformerMixin, Normalizer
+from sklearn.base import TransformerMixin
+from sklearn.preprocessing import Normalizer
 import numpy as np
 
 '''
