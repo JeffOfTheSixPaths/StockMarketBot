@@ -1,4 +1,6 @@
 #python
+#Written by Jude Saloum
+
 from gettext import npgettext #might be superfluous
 import tensorflow as tf
 from tensorflow import keras 
@@ -11,10 +13,11 @@ from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder, Normalizer
 from Preprocessing_tools import NDNormalizer
 import matplotlib.pyplot as plt
+from Comparison import comparison_preprocess
 
 split_percent = 0.75
 
-#Preproccess data
+#Preprocess data
 def get_numpy(csv_name, label, size):
     '''
     Since arrays are stored inside the pandas dataframe cells, to_numpy() is not going to work well
@@ -40,13 +43,20 @@ def get_numpy(csv_name, label, size):
 
     return arr
 
-'''
+
+#function to create LSTM
 def create_LSTM():
-    inputs = layers.Input(shape=(355,7,8))
-    layer1 = LSTM(128, input_shape=())(inputs)
-    outputs = layers.Dense(1, activation="relu")(layer1)
+    inputs = layers.Input(shape=(7,22))
+    layer1 = LSTM(128, return_sequences=True, activation="relu")(inputs)
+    layer2 = LSTM(128, return_sequences=True, activation="relu")(layer1)
+    layer3 = LSTM(128, return_sequences=True, activation="relu")(layer2)
+    layer4 = LSTM(128, return_sequences=True, activation="relu")(layer3)
+    layer5 = layers.Dense(32, activation="relu")(layer4)
+
+    outputs = layers.Dense(1, activation="relu")(layer5)
+
     return keras.Model(inputs=inputs, outputs=outputs)
-'''
+
 
 '''
 the keras.layers.LSTM() object takes inputs in the form of 3D tensor with shape [batch, timesteps, feature].
@@ -78,14 +88,29 @@ print(dataset.shape)
 norm = NDNormalizer() #class to normalize data
 le = LabelEncoder()
 
-comparison_df = pd.read_csv("IDIDIT.csv", usecols=[
-        'comparison'], sep='\t') #read csv with usecols parameter
-
 norm.fit(dataset)
 normalized_dataset = norm.transform(dataset)
 
-le.fit(comparison_df)
-labels = le.transform(comparison_df)
+comparison_df = pd.read_csv('IDIDIT.csv', sep = '\t')
+comparison_df['average of the next 4'] = comparison_df['average of the next 4'].map(comparison_preprocess)
+comparison_df['Prices D7'] = comparison_df['Prices D7'].map(comparison_preprocess)
+
+lcol = 'Prices D7'
+a = 'average of the next 4'
+
+lcol = comparison_df[lcol]
+a  = comparison_df[a]
+
+n = len(comparison_df['comparison']) - 1
+for i in range(n):
+    av = a.loc[i] 
+    l = lcol.loc[i][0]
+    c = av > l
+    print(f'the comparison of {av} > {l} is {c}')
+    comparison_df['comparison'].loc[i] = c
+
+le.fit(comparison_df['comparison'])
+labels = le.transform(comparison_df['comparison'])
 
 #split dataset into testing and training (75/25)
 split_data = int(len(normalized_dataset) * split_percent)
@@ -98,6 +123,11 @@ test_Y = labels[split_labels:]
 
 
 #create model, start fitting and training it
-#model = create_LSTM()
+model = create_LSTM()
+model.compile(loss='binary_crossentropy' ,optimizer='adam', metrics='accuracy')
+print(model.summary())
+model.fit(train_X, train_Y, epochs=500)
+model.evaluate(test_X, test_Y)
+
 
 
