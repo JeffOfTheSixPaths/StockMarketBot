@@ -1,13 +1,13 @@
 from sklearn.base import TransformerMixin
-from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 
 '''
 User defined TransformerMixin class that normalizes an ndarray as Normalizer only works with 2D arrays
 '''
-class NDNormalizer(TransformerMixin):
+class NDScaler(TransformerMixin):
     def __init__(self, **kwargs):
-        self._scaler = Normalizer(copy=True, **kwargs)
+        self._scaler = MinMaxScaler(copy=True, **kwargs)
         self._orig_shape = None
 
     def fit(self, X, **kwargs):

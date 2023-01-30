@@ -11,7 +11,7 @@ from keras.layers import LSTM, Dense
 #from keras.layers import Sequential
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder, Normalizer
-from Preprocessing_tools import NDNormalizer
+from Preprocessing_tools import NDScaler
 import matplotlib.pyplot as plt
 from Comparison import comparison_preprocess
 
@@ -50,10 +50,9 @@ def create_LSTM():
     layer1 = LSTM(128, return_sequences=True, activation="relu")(inputs)
     layer2 = LSTM(128, return_sequences=True, activation="relu")(layer1)
     layer3 = LSTM(128, return_sequences=True, activation="relu")(layer2)
-    layer4 = LSTM(128, return_sequences=True, activation="relu")(layer3)
-    layer5 = layers.Dense(32, activation="relu")(layer4)
+    layer4 = LSTM(128, return_sequences=False, activation="relu")(layer3)
 
-    outputs = layers.Dense(1, activation="relu")(layer5)
+    outputs = layers.Dense(1, activation="relu")(layer4)
 
     return keras.Model(inputs=inputs, outputs=outputs)
 
@@ -85,7 +84,7 @@ for i in range(2,8):
 print(dataset.shape)
 
 #start preprocessing
-norm = NDNormalizer() #class to normalize data
+norm = NDScaler() #class to normalize data
 le = LabelEncoder()
 
 norm.fit(dataset)
@@ -128,6 +127,3 @@ model.compile(loss='binary_crossentropy' ,optimizer='adam', metrics='accuracy')
 print(model.summary())
 model.fit(train_X, train_Y, epochs=500)
 model.evaluate(test_X, test_Y)
-
-
-
