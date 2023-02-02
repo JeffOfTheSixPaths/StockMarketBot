@@ -91,25 +91,10 @@ norm.fit(dataset)
 normalized_dataset = norm.transform(dataset)
 
 comparison_df = pd.read_csv('IDIDIT.csv', sep = '\t')
-comparison_df['average of the next 4'] = comparison_df['average of the next 4'].map(comparison_preprocess)
-comparison_df['Prices D7'] = comparison_df['Prices D7'].map(comparison_preprocess)
+comparison_df = comparison_df['average of the next 4'].to_numpy()
 
-lcol = 'Prices D7'
-a = 'average of the next 4'
-
-lcol = comparison_df[lcol]
-a  = comparison_df[a]
-
-n = len(comparison_df['comparison']) - 1
-for i in range(n):
-    av = a.loc[i] 
-    l = lcol.loc[i][0]
-    c = av > l
-    print(f'the comparison of {av} > {l} is {c}')
-    comparison_df['comparison'].loc[i] = c
-
-le.fit(comparison_df['comparison'])
-labels = le.transform(comparison_df['comparison'])
+comparison_norm = NDScaler()
+labels = comparison_norm.fit_transform(comparison_df.reshape(-1, 1))
 
 #split dataset into testing and training (75/25)
 split_data = int(len(normalized_dataset) * split_percent)
@@ -123,7 +108,9 @@ test_Y = labels[split_labels:]
 
 #create model, start fitting and training it
 model = create_LSTM()
-model.compile(loss='binary_crossentropy' ,optimizer='adam', metrics='accuracy')
+model.compile(loss='mse' ,optimizer='adam', metrics='accuracy')
 print(model.summary())
 model.fit(train_X, train_Y, epochs=500)
 model.evaluate(test_X, test_Y)
+
+print(keras.utils.plot_model(model))

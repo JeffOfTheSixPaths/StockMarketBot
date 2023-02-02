@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def comparison_preprocess(junk) -> list:
+def comparison_preproccess(junk) -> list:
     if type(junk) == type(1.0): return np.asarray(junk)
     '''
     the input is supposed to look like "[1,2,3,4]" which is a string
@@ -24,3 +24,21 @@ def comparison_preprocess(junk) -> list:
             raise ValueError(f'Could not convert value {e} to float')
     
     return np.asarray(arr)
+
+evaluation_df = pd.read_csv('IDIDIT.csv', sep = '\t')
+evaluation_df['average of the next 4'] = evaluation_df['average of the next 4'].map(comparison_preproccess)
+evaluation_df['Prices D7'] = evaluation_df['Prices D7'].map(comparison_preproccess)
+
+lcol = 'Prices D7'
+a = 'average of the next 4'
+
+lcol = evaluation_df[lcol]
+a  = evaluation_df[a]
+
+n = len(evaluation_df['comparison']) - 1
+for i in range(n):
+    av = a.loc[i] 
+    l = lcol.loc[i][0]
+    c = av > l
+    print(f'the comparison of {av} > {l} is {c}')
+    evaluation_df['comparison'].loc[i] = c
