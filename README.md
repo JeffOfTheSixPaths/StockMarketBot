@@ -1,7 +1,6 @@
 # StockMarketBot
-(Very early development) A bot that will eventually try to predict stocks.
-currently is unable to predict.
-
+ A bot that will eventually try to predict stocks.
+ saying it's a work in progress is putting it lightly
 
 to do:
   - have the webscraper get more data
@@ -21,16 +20,8 @@ pip install matplotlib
 pip install gdown
 ```
 
-citations for some of the datasets used
+# usage:
+  within the Web_Scraping folder is the code that is used to generate the dataset. config.json has different parameters which can be used for the dataset, however only the default parameters have been used for machine learning. running `dataToCsv.py` will generate a csv file `IDIDIT.csv` which uses tabs for seperators. This is the dataset that is used for machine learning. This file takes an extremely long amount of time to run, about 2 hours with an RTX gpu and 32 gigabytes of ram, so goodluck anyone trying to actually run this. 
 
-Amazon Kindle Reviews:
-Ups and downs: Modeling the visual evolution of fashion trends with one-class collaborative filtering
-R. He, J. McAuley
-WWW, 2016
-
-Image-based recommendations on styles and substitutes
-J. McAuley, C. Targett, J. Shi, A. van den Hengel
-SIGIR, 2015
-
-Stock-Market Sentiment Dataset:
-Yash Chaudhary. (2020). <i>Stock-Market Sentiment Dataset</i> [Data set]. Kaggle. https://doi.org/10.34740/KAGGLE/DSV/1217821
+# The machine learning:
+  The model that is being submitted is stored within `ML_Prediction/Multivariate_Time_Series_LSTM/` and the weights are in the `saved model` folder.
