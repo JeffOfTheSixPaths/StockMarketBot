@@ -5,6 +5,7 @@
 to do:
   - have the webscraper get more data
   - make the sentiment model better
+  - Make the generation of the data faster
 
 dependencies:
 ```
