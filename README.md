@@ -2,6 +2,7 @@
  A bot that will eventually try to predict stocks.
  saying it's a work in progress is putting it lightly
 
+look on the wiki for some detail on what this project was intended for and how it works
 to do:
   - have the webscraper get more data
   - make the sentiment model better
