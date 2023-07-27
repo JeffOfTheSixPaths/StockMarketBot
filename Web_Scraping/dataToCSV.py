@@ -94,8 +94,8 @@ first_stock_date = str(first_stock_date).split(' ')[0] #removes the " 00:00:00" 
 
 
 
-#[articles,stock prices]
-articles_and_stock_price = [[articles[first_stock_date], dates_of_the_stock[first_stock_date]]] #this is a 2d array
+# each element of this is [articles, stock price], articles is a dict and dates_of_the_stock is an array
+articles_and_stock_price = [[articles[first_stock_date], dates_of_the_stock[first_stock_date]]] #this is a 3d array
 
 #finds which date in the list of dates the stocks prices start on
 starting_date_index = 0
@@ -104,9 +104,11 @@ for index, date in enumerate(list_of_dates):
         starting_date_index = index
         break
 
-#print(starting_date_index)
 
+# many stocks have missing dates in them, this is filling in the gaps
+# if there's a missing value in the stock prices, it just fills it in with the last known stock date
 for index, date in enumerate(list_of_dates[starting_date_index+1:]):
+    # checks if the stock has the date
     if date in list_of_stock_dates:
         if date not in articles.keys():
             print(f'{date} is not in articles')
@@ -114,6 +116,7 @@ for index, date in enumerate(list_of_dates[starting_date_index+1:]):
             print(f'{date} in not in dates_of_the_stock')
         articles_and_stock_price.append([articles[date], dates_of_the_stock[date]])
 
+    #if it doens't have the date it goes back and fills in the value with the last known stock price
     else:
         #if the date is not in the list of the stocks prices, then this gets the last stock price and assigns it to the current date
         last_values = articles_and_stock_price[-1] #gets last stock price
@@ -123,6 +126,19 @@ for index, date in enumerate(list_of_dates[starting_date_index+1:]):
 
 
 #now for the ai
+'''
+ ________  ___          _________  ___  _____ ______   _______   ___  ___       
+|\   __  \|\  \        |\___   ___\\  \|\   _ \  _   \|\  ___ \ |\  \|\  \      
+\ \  \|\  \ \  \       \|___ \  \_\ \  \ \  \\\__\ \  \ \   __/|\ \  \ \  \     
+ \ \   __  \ \  \           \ \  \ \ \  \ \  \\|__| \  \ \  \_|/_\ \  \ \  \    
+  \ \  \ \  \ \  \           \ \  \ \ \  \ \  \    \ \  \ \  \_|\ \ \__\ \__\   
+   \ \__\ \__\ \__\           \ \__\ \ \__\ \__\    \ \__\ \_______\|__|\|__|   
+    \|__|\|__|\|__|            \|__|  \|__|\|__|     \|__|\|_______|   ___  ___ 
+                                                                      |\__\|\__\
+                                                                      \|__|\|__|
+'''                         
+
+# downloading the weights and vocab data                                                    
 def download_sentiment_data():
     print("Starting on making the AI")
     print("Downloading necessary files from a google drive")
@@ -146,10 +162,15 @@ elif not (redownload_sentiment_data == 'y' or redownload_sentiment_data == 'n'):
 
 use_s140 = False # Putting this to True will break the code, but this will be kept in here in case I use the s140 dataset in my sentiment analysis model sometime in the future
 
+
+# loads the model weights
 weights_path = 'sentiment_model_weights/cp.cpkt'
 weights_dir = os.path.dirname(weights_path)
 latest = tf.train.latest_checkpoint(weights_dir)
 
+
+# loads the training data for the model
+# used in the word vectorizer to get the vocabulary
 train_text = 'sentiment_model_weights/sentiment_text.csv'
 train_sentiment = 'sentiment_model_weights/sentiment_sentiment.npy'
 if use_s140:
@@ -160,11 +181,11 @@ if use_s140:
 print("loading the data")
 train_text = pd.read_csv(train_text)
 train_sentiment = np.load(train_sentiment)
-train_text.pop('Unnamed: 0')
+train_text.pop('Unnamed: 0') # extraneous column resulting from how pandas saves dataframes as csvs 
 if use_s140:
     s140_text = pd.read_csv(s140_text)
     s140_sentiment = np.load(s140_sentiment)
-    s140_text.pop('Unnamed: 0')
+    s140_text.pop('Unnamed: 0') # extraneous column resulting from how pandas saves dataframes as csvs 
 print("loaded the data")
 
 print("converting data to a usable form for the ai")
@@ -179,18 +200,21 @@ train_sentiment = tf.convert_to_tensor(train_sentiment)
 train_dataset = tf.data.Dataset.from_tensor_slices((train_text,train_sentiment))
 print("converted")
 
+
+# this takes ~30 minutes on my computer
 print('creating the model and encoding the data')
 model = sentimentAnalysis.make_sentiment_model(train_dataset)
 print('loading weights')
 model.load_weights(latest)
 print('loaded weights')
+
+# put in a sentence and then it outputs the sentiment
 def predict(sentence: str):
-    return model.predict(np.array([sentence]), verbose = 0)
+    return model.predict(np.array([sentence]), verbose = 0) # verbose = 0 removes the printing of every single predict, which substantially speeds up the program
 
 test_sentences = [
                     'I love this',
                     'I hate this',
-                    'Gamers are oppressed',
                     'I really love dogs',
                     'I really hate dogs',
                     'I fucking love dogs', #using the f-word here as it can be used with different connotations in different sentences
@@ -208,8 +232,8 @@ for sentence in test_sentences: #just to test if the model loaded correctly, it 
     print('\n')
 
 
-#since each day has a variable number of articles, it is necessary to create some way to reduce it to some constant number
-#my approach is to generate many statistics about the set of articles on each day
+# since each day has a variable number of articles, it is necessary to create some way to reduce it to some constant number
+# one my approach is to generate many statistics about the set of articles on each day
 def stats_of_a_list(arr):
     rms = Statistics.root_mean_square(arr)
     mean = Statistics.arithmetic_mean(arr)
@@ -232,12 +256,16 @@ def stats_of_a_list(arr):
             , quartic_standard_deviation, quintic_standard_deviation]
 
 
+transfer_learning = True # TODO: need to make this into a config choice
+
 stats_and_stock_prices = []
 #I only need 'snippet', 'lead_paragraph'
 for article_stock in articles_and_stock_price:
     #article_stock is a 2d list of [articles, stock_prices]
     articles = article_stock[0]
     stock_prices = article_stock[1]
+
+    # storing these variables in here
     snippets = []
     lead_paragraphs = []
 
@@ -263,6 +291,8 @@ for article_stock in articles_and_stock_price:
             # put through the sentiment model
             snippets.append(snippet_sentiment)
             lead_paragraphs.append(lead_paragraph_sentiment)
+
+
     try:
         for article in articles['theguardian']:
             snippet = article['webTitle']
