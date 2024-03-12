@@ -128,7 +128,7 @@ def make_d2a_theguardian():
     
 
 '''
-
+for each org, their d2a is 
 days_to_articles = {
                 'date': [article_dictionary1, article_dictionary2, etc.],
                 'another date': [the articles on this date now as a dictionary, another article on this date as a dictionary]
@@ -138,6 +138,19 @@ days_to_articles = {
 
 '''
 
+'''
+the days_to_articles that's being saved is
+
+days_to_articles = {
+    date: {
+        'org1': [ their articles ],
+        'org2': [ their articles ],
+        ...
+    }
+}
+
+here it's 'nyt' and 'theguardian'
+'''
 def get_d2a():
     #making multiple threads so that we don't have to wait for all of the requests to be over before we can start the next one
     nyt_thread = threading.Thread(target = make_d2a_nyt)
@@ -152,6 +165,8 @@ def get_d2a():
     print('threads are finished')
     #print(f'the number of threads: {threading.active_count()}') this prints 1
 
+
+    # if we want to see the results for each individual organization, set the corresponding one to true
     see_nyt = False
     if see_nyt:
         f = open("nyt_d2a.json",'w')
@@ -166,6 +181,9 @@ def get_d2a():
     
     
     
+    # formatting the the articles from each site 
+    # each `key` is the date, since we want to choose all the articles for a certain date
+    # we make the organization the key in this dict so that we can specify for each organzation for each date
 
     days_to_articles = {}
     for key, element in nyt_d2a[0].items(): #it's nyt_d2a[0] because the d2a is appended to an empty array in order to have it returned
@@ -174,6 +192,8 @@ def get_d2a():
     
 
     for key, element in guard_d2a[0].items(): #it's guard_d2a[0] because the d2a is appended to an empty array in order to have it returned
+
+        # TODO: check if days_to_articles[key] = days_to_articles[key].get('theguardian', {}) works
         try:
             days_to_articles[key]['theguardian'] = element
         except:
